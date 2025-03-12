@@ -1,5 +1,4 @@
-# google-scholar-assistant
-A browser plugin designed to increase Google Scholar.
+# 谷歌学术助手
 
 <p align="center">
   <img src="icons/icon128.png" alt="谷歌学术助手图标" width="128" height="128">

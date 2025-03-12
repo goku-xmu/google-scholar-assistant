@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>谷歌学术助手</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      width: 455px; /* 将宽度减少30% */
+      padding: 20px;
+      box-sizing: border-box;
+      background-color: #f9f9f9;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .form-group {
+      margin-bottom: 15px;
+      position: relative;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    /* 新增：调整搜索信息的间距 */
+    #search-info-group {
+      margin-bottom: 5px; /* 将间距减小 */
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #555;
+    }
+    input[type="text"], 
+    input[type="number"],
+    select,
+    .dropdown,
+    .dropdown-button {
+      width: 100%;
+      padding: 10px; /* 增加内边距 */
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    /* 自定义下拉框样式 */
+    .dropdown {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+    .dropdown-button {
+      text-align: left;
+      background-color: #fff;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .dropdown-button:hover {
+      border-color: #007bff;
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: #ffffff; /* 背景颜色 */
+      width: 95%; /* 保持与dropdown-button一致 */
+      max-height: 450px; /* 增加最大高度到450px */
+      overflow-y: auto;
+      border: 1px solid #ccc; /* 调整边框粗细和颜色 */
+      border-top: none;
+      z-index: 1;
+      padding: 10px;
+      box-sizing: border-box;
+      border-radius: 0 0 4px 4px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+    .dropdown.active .dropdown-content {
+      display: block;
+    }
+    .category {
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eaeaea; /* 添加分隔线 */
+      display: flex;
+      flex-direction: column; /* 纵向布局 */
+      width: 100%; /* 确保宽度一致 */
+      cursor: grab;
+    }
+    .category.dragging {
+      opacity: 0.5;
+    }
+    .category-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    .category-left {
+      display: flex;
+      align-items: center;
+    }
+    .category-right {
+      display: flex;
+      align-items: center;
+      gap: 10px; /* 增加元素间距 */
+    }
+    .category-checkbox {
+      transform: scale(1.2);
+      margin-right: 5px;
+      cursor: pointer;
+    }
+    .category-info {
+      margin-right: 10px;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 14px; /* 调整字号 */
+      color: #007bff;
+      display: inline-block; /* 改为内联块，避免占满整行 */
+    }
+    .copy-button {
+      padding: 2px 5px;
+      font-size: 14px; /* 调整字号 */
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .copy-button:hover {
+      background-color: #5a6268;
+    }
+    .delete-button {
+      padding: 2px 5px;
+      font-size: 14px;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .delete-button:hover {
+      background-color: #c82333;
+    }
+    .journals {
+      display: none;
+      margin-top: 10px;
+      padding-left: 20px; /* 增加左边距，使内容缩进 */
+      font-size: 14px;
+      color: #555;
+      white-space: pre-wrap; /* 保持换行 */
+      width: 100%; /* 确保宽度一致 */
+      box-sizing: border-box;
+    }
+    .journals.visible {
+      display: block;
+    }
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    .buttons button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+      transition: background-color 0.3s;
+      width: 48%; /* 确保按钮宽度一致 */
+    }
+    #generate-btn {
+      background-color: #28a745;
+    }
+    #generate-btn:hover {
+      background-color: #218838;
+    }
+    #search-btn {
+      background-color: #007bff;
+    }
+    #search-btn:hover {
+      background-color: #0056b3;
+    }
+    /* 滚动条样式优化 */
+    .dropdown-content::-webkit-scrollbar {
+      width: 8px;
+    }
+    .dropdown-content::-webkit-scrollbar-track {
+      background: #f1f1f1; 
+    }
+    .dropdown-content::-webkit-scrollbar-thumb {
+      background: #888; 
+      border-radius: 4px;
+    }
+    .dropdown-content::-webkit-scrollbar-thumb:hover {
+      background: #555; 
+    }
+    /* Modal 样式 */
+    .modal {
+      display: none; /* Hidden by default */
+      position: fixed; /* Stay in place */
+      z-index: 2000; /* Sit on top */
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto; /* Enable scroll if needed */
+      background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 10% auto; /* 10% from the top and centered */
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%; /* Could be more or less, depending on screen size */
+      border-radius: 8px;
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+    }
+    .modal input[type="text"], .modal textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .modal button {
+      padding: 8px 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: white;
+      background-color: #007bff;
+      transition: background-color 0.3s;
+    }
+    .modal button:hover {
+      background-color: #0056b3;
+    }
+    /* 样式优化拖动手柄 */
+    .drag-handle {
+      font-size: 18px;
+      color: #888;
+      cursor: grab;
+      margin-left: 10px;
+    }
+    .drag-handle:hover {
+      color: #555;
+    }
+    /* 新增样式 */
+    .search-tips {
+      color: #666666; /* 深灰色 */
+      font-size: 12px;
+      margin: 5px 0; /* 将间距减小 */
+      white-space: pre-line; /* 保留换行 */
+      line-height: 1.2; /* 调整行高以减少间距 */
+    }
+    .year-group {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .year-group .form-group {
+      flex: 1;
+    }
+    .contact-info {
+      text-align: center;
+      color: #999999; /* 浅灰色 */
+      font-size: 12px;
+      margin-top: 20px;
+    }
+    /* 新增：导出全部期刊范围按钮 */
+    #export-category {
+      border-bottom: none;
+      margin-top: 5px; /* 减小上方的外边距 */
+      margin-bottom: 0; /* 移除下方的外边距 */
+      padding-top: 5px; /* 减小上方的内边距 */
+      padding-bottom: 5px; /* 减小下方的内边距 */
+    }
+    #export-category-button {
+      padding: 6px 8px; /* 减少内边距 */
+      font-size: 14px; /* 保持文字大小 */
+      text-align: right;
+    }
+    /* 新增样式，用于隐藏文件输入 */
+    #import-file-input {
+      display: none;
+    }
+    /* 新增：移除导入和导出按钮之间的分隔线 */
+    #import-category {
+      border-bottom: none;
+      margin-bottom: 5px; /* 调整间距使按钮靠近 */
+      padding-bottom: 5px; /* 调整内边距 */
+    }
+    #confirm-dialog .modal-content {
+      max-width: 300px;
+    }
+
+    #confirm-dialog .button-group {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+
+    #confirm-dialog button {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #confirm-yes {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    #confirm-no {
+      background-color: #6c757d;
+      color: white;
+    }
+    
+    /* 新增样式 */
+    .title-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    
+    .title-icon {
+      width: 32px;
+      height: 32px;
+      margin-right: 10px;
+    }
+    
+    h2 {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- 修改标题部分 -->
+  <div class="title-container">
+    <img src="icons/icon128.png" alt="谷歌学术助手图标" class="title-icon">
+    <h2>谷歌学术助手</h2>
+  </div>
+  
+  <div class="form-group" id="search-info-group">
+    <label for="search-query">搜索信息：</label>
+    <input type="text" id="search-query" placeholder="请输入搜索内容">
+  </div>
+  
+  <div class="search-tips">
+    谷歌搜索技巧：英文引号搜索短语；大写OR搜索并集；<br>
+    括号限定范围；减号不空格排除；intitle:标题author:作者。<br>
+    示例如下：intitle:("particulate matter" OR ozone) -author:"C Li"
+  </div>
+  
+  <div class="form-group">
+    <label>期刊范围：</label>
+    <div class="dropdown" id="journal-dropdown">
+      <div class="dropdown-button">请选择期刊范围（点击展开）</div>
+      <div class="dropdown-content" id="dropdown-content">
+        <!-- 动态生成的期刊类别将插入在这里 -->
+        <!-- 添加期刊类别按钮 -->
+        <div class="category" id="add-category">
+          <button id="add-category-button" style="
+            width: 100%;
+            padding: 8px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+          ">+ 添加期刊类别</button>
+        </div>
+        <!-- 新增：导入期刊范围按钮 -->
+        <div class="category" id="import-category">
+          <button id="import-category-button" style="
+            width: 100%;
+            padding: 6px 8px;
+            background-color: transparent;
+            color: #007bff;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: underline;
+            text-align: right;
+          ">导入我的期刊范围</button>
+        </div>
+        <!-- 新增：导出全部期刊范围按钮 -->
+        <div class="category" id="export-category">
+          <button id="export-category-button" style="
+            width: 100%;
+            padding: 6px 8px;
+            background-color: transparent;
+            color: #007bff;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: underline;
+            text-align: right;
+          ">导出全部期刊范围</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="year-group">
+    <div class="form-group">
+      <label for="start-year">起始年份：</label>
+      <input type="number" id="start-year" value="2022" min="1900" max="2100">
+    </div>
+    
+    <div class="form-group">
+      <label for="end-year">结束年份：</label>
+      <input type="number" id="end-year" value="2025" min="1900" max="2100">
+    </div>
+  </div>
+  
+  <!-- 新增“文章类型”下拉框 -->
+  <div class="form-group">
+    <label for="article-type">文章类型：</label>
+    <select id="article-type">
+      <option value="0">全部</option>
+      <option value="1">综述</option>
+    </select>
+  </div>
+  
+  <div class="buttons">
+    <button id="generate-btn">生成并复制链接</button>
+    <button id="search-btn">直接搜索</button>
+  </div>
+  
+  <!-- 添加论文信息提取结果的区域 -->
+  <div id="extracted-titles"></div>
+  
+  <!-- Modal for Adding New Category -->
+  <div id="add-category-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="close-modal">&times;</span>
+      <h3>添加新期刊类别</h3>
+      <label for="new-category-name">类别名称：</label>
+      <input type="text" id="new-category-name" placeholder="请输入类别名称">
+      <label for="new-category-journals">期刊名称（每行一个）：</label>
+      <textarea id="new-category-journals" rows="5" placeholder="请输入期刊名称，每行一个"></textarea>
+      <button id="save-new-category">保存</button>
+    </div>
+  </div>
+  
+  <!-- 新增：导入文件输入 -->
+  <input type="file" id="import-file-input" accept="application/json">
+  
+  <div class="contact-info">
+    有问题请联系：changhao58@126.com
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

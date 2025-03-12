@@ -1,0 +1,62 @@
+.journal-item {
+  display: flex;
+  align-items: center;
+  margin: 5px 0;
+}
+
+.journal-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-right: 5px;
+}
+
+.journal-input:hover {
+  border-color: #aaa;
+}
+
+.journal-input:focus {
+  border-color: #4CAF50;
+  outline: none;
+}
+
+.delete-journal-btn {
+  background: none;
+  border: none;
+  color: #ff4444;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 16px;
+}
+
+.delete-journal-btn:hover {
+  color: #ff0000;
+}
+
+.add-journal-container {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.new-journal-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px dashed #aaa;
+  border-radius: 4px;
+  margin-right: 5px;
+}
+
+.add-journal-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.add-journal-btn:hover {
+  background: #45a049;
+} 
