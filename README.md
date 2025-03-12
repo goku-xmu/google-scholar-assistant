@@ -91,7 +91,7 @@
 
 ## 👨‍💻 作者
 
-[goku_xmu]
+goku_xmu
 
 ---
 
