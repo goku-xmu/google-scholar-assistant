@@ -1385,6 +1385,11 @@ function closeResultsWindow() {
 function startExtraction() {
   if (isExtracting) return;
   isExtracting = true;
+  
+  // 添加进度条并初始化
+  addProgressBar();
+  updateProgressBar(1, maxPages, 0);
+  
   chrome.storage.local.set({currentPage: 1, allPapers: [], isExtracting: true}, () => {
     extractAndNavigate();
   });
@@ -1419,6 +1424,9 @@ function extractAndNavigate() {
     // 合并新论文
     allPapers = allPapers.concat(uniqueNewPapers);
     console.log(`提取到 ${uniqueNewPapers.length} 篇新论文，总计 ${allPapers.length} 篇论文。`);
+    
+    // 更新进度条
+    updateProgressBar(currentPage, maxPages, allPapers.length);
 
     chrome.storage.local.set({ currentPage, allPapers, isExtracting: true }, () => {
       displayTitlesWithJournals(allPapers);
@@ -1440,11 +1448,19 @@ function extractAndNavigate() {
 // 完成提取
 function finalizeExtraction(allPapers) {
   console.log('开始处理提取到论文信息。');
+  // 更新进度条显示为处理中
+  const progressText = document.getElementById('progress-text');
+  if (progressText) {
+    progressText.textContent = '正在处理...';
+  }
+  
   fetchJournalInfo(allPapers).then(processedPapers => {
     displayTitlesWithJournals(processedPapers);
     isExtracting = false;
     chrome.storage.local.set({ isExtracting: false }, () => {
       console.log('提取完成，设置 isExtracting 为 false');
+      // 隐藏进度条
+      setTimeout(hideProgressBar, 2000);
     });
   });
 }
@@ -1739,13 +1755,22 @@ async function initialize() {
   });
 
   await loadCSVData();
-  chrome.storage.local.get(['isExtracting'], (data) => {
+  chrome.storage.local.get(['isExtracting', 'currentPage', 'allPapers'], (data) => {
     isExtracting = data.isExtracting || false;
     addExtractButton();
     addSettingsButton(); // 添加设置按钮
+    addProgressBar(); // 添加进度条
+    
     if (isExtracting) {
       console.log('检测到正在进行的提取，继续提取。');
+      // 如果正在提取，显示进度条
+      if (data.currentPage && data.allPapers) {
+        updateProgressBar(data.currentPage, maxPages, data.allPapers.length);
+      }
       setTimeout(extractAndNavigate, 2000);
+    } else {
+      // 如果没有正在提取，隐藏进度条
+      hideProgressBar();
     }
   });
 }
@@ -2093,3 +2118,66 @@ filterJournals = function() {
   originalFilterJournals.apply(this, arguments);
   updateSelectAllState();
 };
+
+function addProgressBar() {
+  let progressContainer = document.getElementById('extraction-progress-container');
+  if (!progressContainer) {
+    progressContainer = document.createElement('div');
+    progressContainer.id = 'extraction-progress-container';
+    progressContainer.style.cssText = `
+      position: fixed;
+      left: 20px;
+      bottom: 17%;
+      width: 180px;
+      background-color: white;
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 999;
+      display: none;
+    `;
+    
+    progressContainer.innerHTML = `
+      <div style="margin-bottom: 5px; font-size: 12px; display: flex; justify-content: space-between;">
+        <span id="progress-text">提取中...</span>
+        <span id="progress-percentage">0%</span>
+      </div>
+      <div style="width: 100%; background-color: #f0f0f0; border-radius: 4px; overflow: hidden;">
+        <div id="progress-bar" style="height: 8px; width: 0%; background-color: #d3baf8; transition: width 0.3s;"></div>
+      </div>
+      <div style="margin-top: 5px; font-size: 12px; text-align: center;">
+        <span id="progress-details">第 0/0 页，共 0 篇论文</span>
+      </div>
+    `;
+    
+    document.body.appendChild(progressContainer);
+  }
+  return progressContainer;
+}
+
+function updateProgressBar(currentPage, maxPages, paperCount) {
+  const progressContainer = document.getElementById('extraction-progress-container');
+  if (!progressContainer) return;
+  
+  const progressBar = document.getElementById('progress-bar');
+  const progressPercentage = document.getElementById('progress-percentage');
+  const progressDetails = document.getElementById('progress-details');
+  
+  // 计算进度百分比
+  const percentage = Math.min(Math.round((currentPage / maxPages) * 100), 100);
+  
+  // 更新进度条
+  progressBar.style.width = `${percentage}%`;
+  progressPercentage.textContent = `${percentage}%`;
+  progressDetails.textContent = `第 ${currentPage}/${maxPages} 页，共 ${paperCount} 篇论文`;
+  
+  // 显示进度条容器
+  progressContainer.style.display = 'block';
+}
+
+function hideProgressBar() {
+  const progressContainer = document.getElementById('extraction-progress-container');
+  if (progressContainer) {
+    progressContainer.style.display = 'none';
+  }
+}
