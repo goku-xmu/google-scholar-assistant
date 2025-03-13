@@ -4,6 +4,105 @@ let maxPages = 10; // 默认值为10
 // 存储CSV数据的映射
 const zkyfqMap = {};
 const jcrfqMap = {};
+const ccfMap = {}; // 新增CCF分级信息存储
+
+// CCF分级匹配辅助映射 - 增加更广泛的匹配能力
+const ccfAbbreviationMap = {};
+const ccfCommonNames = {};
+
+// 直接定义CCF分级数据 - 防止文件加载失败
+const CCF_RANKINGS = [
+  // A类期刊
+  { rank: "A", abbr: "TOCS", name: "ACM Transactions on Computer Systems" },
+  { rank: "A", abbr: "TOS", name: "ACM Transactions on Storage" },
+  { rank: "A", abbr: "TCAD", name: "IEEE Transactions On Computer-Aided Design Of Integrated Circuits And System" },
+  { rank: "A", abbr: "TC", name: "IEEE Transactions on Computers" },
+  { rank: "A", abbr: "TPDS", name: "IEEE Transactions on Parallel and Distributed Systems" },
+  { rank: "A", abbr: "TACO", name: "ACM Transactions on Architecture and Code Optimization" },
+  { rank: "A", abbr: "JSAC", name: "IEEE Journal of Selected Areas in Communications" },
+  { rank: "A", abbr: "TMC", name: "IEEE Transactions on Mobile Computing" },
+  { rank: "A", abbr: "TON", name: "IEEE/ACM Transactions on Networking" },
+  { rank: "A", abbr: "TDSC", name: "IEEE Transactions on Dependable and Secure Computing" },
+  { rank: "A", abbr: "TIFS", name: "IEEE Transactions on Information Forensics and Security" },
+  { rank: "A", abbr: "JOC", name: "Journal of Cryptology" },
+  { rank: "A", abbr: "TOPLAS", name: "ACM Transactions on Programming Languages & Systems" },
+  { rank: "A", abbr: "TOSEM", name: "ACM Transactions on Software Engineering and Methodology" },
+  { rank: "A", abbr: "TSE", name: "IEEE Transactions on Software Engineering" },
+  { rank: "A", abbr: "TSC", name: "IEEE Transactions on Service Computing" },
+  { rank: "A", abbr: "TODS", name: "ACM Transactions on Database Systems" },
+  { rank: "A", abbr: "TOIS", name: "ACM Transactions on Information Systems" },
+  { rank: "A", abbr: "TKDE", name: "IEEE Transactions on Knowledge and Data Engineering" },
+  { rank: "A", abbr: "VLDBJ", name: "VLDB Journal" },
+  { rank: "A", abbr: "JACM", name: "Journal of the ACM" },
+  { rank: "A", abbr: "AI", name: "Artificial Intelligence" },
+  { rank: "A", abbr: "TPAMI", name: "IEEE Trans on Pattern Analysis and Machine Intelligence" },
+  { rank: "A", abbr: "IJCV", name: "International Journal of Computer Vision" },
+  { rank: "A", abbr: "JMLR", name: "Journal of Machine Learning Research" },
+  { rank: "A", abbr: "TVCG", name: "IEEE Transactions on Visualization and Computer Graphics" },
+  
+  // A类会议
+  { rank: "A", abbr: "SIGCOMM", name: "ACM International Conference on Applications, Technologies, Architectures, and Protocols for Computer Communication" },
+  { rank: "A", abbr: "MobiCom", name: "ACM International Conference on Mobile Computing and Networking" },
+  { rank: "A", abbr: "INFOCOM", name: "IEEE International Conference on Computer Communications" },
+  { rank: "A", abbr: "NSDI", name: "Symposium on Network System Design and Implementation" },
+  { rank: "A", abbr: "CCS", name: "ACM Conference on Computer and Communications Security" },
+  { rank: "A", abbr: "EUROCRYPT", name: "European Cryptology Conference" },
+  { rank: "A", abbr: "S&P", name: "IEEE Symposium on Security and Privacy" },
+  { rank: "A", abbr: "CRYPTO", name: "International Cryptology Conference" },
+  { rank: "A", abbr: "SOSP", name: "ACM Symposium on Operating Systems Principles" },
+  { rank: "A", abbr: "OSDI", name: "USENIX Symposium on Operating Systems Design and Implementation" },
+  { rank: "A", abbr: "SIGMOD", name: "ACM Conference on Management of Data" },
+  { rank: "A", abbr: "SIGKDD", name: "ACM Knowledge Discovery and Data Mining" },
+  { rank: "A", abbr: "ICDE", name: "IEEE International Conference on Data Engineering" },
+  { rank: "A", abbr: "SIGIR", name: "International Conference on Research on Development in Information Retrieval" },
+  { rank: "A", abbr: "VLDB", name: "International Conference on Very Large Data Bases" },
+  { rank: "A", abbr: "AAAI", name: "AAAI Conference on Artificial Intelligence" },
+  { rank: "A", abbr: "CVPR", name: "IEEE Conference on Computer Vision and Pattern Recognition" },
+  { rank: "A", abbr: "ICCV", name: "International Conference on Computer Vision" },
+  { rank: "A", abbr: "ICML", name: "International Conference on Machine Learning" },
+  { rank: "A", abbr: "NIPS/NeurIPS", name: "Annual Conference on Neural Information Processing Systems" },
+  { rank: "A", abbr: "ACL", name: "Annual Meeting of the Association for Computational Linguistics" },
+  { rank: "A", abbr: "PLDI", name: "ACM SIGPLAN Symposium on Programming Language Design & Implementation" },
+  { rank: "A", abbr: "POPL", name: "ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages" },
+  { rank: "A", abbr: "PPoPP", name: "ACM SIGPLAN Symposium on Principles & Practice of Parallel Programming" },
+  { rank: "A", abbr: "FAST", name: "Conference on File and Storage Technologies" },
+  { rank: "A", abbr: "DAC", name: "Design Automation Conference" },
+  { rank: "A", abbr: "HPCA", name: "High-Performance Computer Architecture" },
+  { rank: "A", abbr: "MICRO", name: "IEEE/ACM International Symposium on Microarchitecture" },
+  { rank: "A", abbr: "SC", name: "International Conference for High Performance Computing, Networking, Storage, and Analysis" },
+  { rank: "A", abbr: "ASPLOS", name: "International Conference on Architectural Support for Programming Languages and Operating Systems" },
+  { rank: "A", abbr: "ISCA", name: "International Symposium on Computer Architecture" },
+  { rank: "A", abbr: "USENIX ATC", name: "USENIX Annual Technical Conference" },
+  { rank: "A", abbr: "EuroSys", name: "European Conference on Computer Systems" },
+  { rank: "A", abbr: "NDSS", name: "ISOC Network and Distributed System Security Symposium" },
+  { rank: "A", abbr: "USENIX Security", name: "Usenix Security Symposium" },
+  
+  // B类期刊 (仅列举部分)
+  { rank: "B", abbr: "TOIT", name: "ACM Transactions on Internet Technology" },
+  { rank: "B", abbr: "TOMCCAP", name: "ACM Transactions on Multimedia Computing, Communications and Applications" },
+  { rank: "B", abbr: "TOSN", name: "ACM Transactions on Sensor Networks" },
+  { rank: "B", abbr: "CN", name: "Computer Networks" },
+  { rank: "B", abbr: "TCOM", name: "IEEE Transactions on Communications" },
+  { rank: "B", abbr: "TWC", name: "IEEE Transactions on Wireless Communications" },
+  { rank: "B", abbr: "TOPS", name: "ACM Transactions on Privacy and Security" },
+  { rank: "B", abbr: "COMPSEC", name: "Computers & Security" },
+  { rank: "B", abbr: "DCC", name: "Designs, Codes and Cryptography" },
+  { rank: "B", abbr: "JCS", name: "Journal of Computer Security" },
+  { rank: "B", abbr: "TAAS", name: "ACM Transactions on Autonomous and Adaptive Systems" },
+  { rank: "B", abbr: "TODAES", name: "ACM Transactions on Design Automation of Electronic Systems" },
+  { rank: "B", abbr: "TECS", name: "ACM Transactions on Embedded Computing Systems" },
+  { rank: "B", abbr: "TRETS", name: "ACM Transactions on Reconfigurable Technology and Systems" },
+  { rank: "B", abbr: "TVLSI", name: "IEEE Transactions on Very Large Scale Integration (VLSI) Systems" },
+  
+  // C类期刊 (仅列举部分)
+  { rank: "C", abbr: "JETC", name: "ACM Journal on Emerging Technologies in Computing Systems" },
+  { rank: "C", abbr: "CONCURRENCY", name: "Concurrency and Computation: Practice and Experience" },
+  { rank: "C", abbr: "DC", name: "Distributed Computing" },
+  { rank: "C", abbr: "FGCS", name: "Future Generation Computer Systems" },
+  { rank: "C", abbr: "TCC", name: "IEEE Transactions on Cloud Computing" },
+  { rank: "C", abbr: "CLSR", name: "Computer Law and Security Review" },
+  { rank: "C", abbr: "EJISEC", name: "EURASIP Journal on Information Security" }
+];
 
 // 加载CSV文件并解析
 async function loadCSVData() {
@@ -18,10 +117,75 @@ async function loadCSVData() {
     const jcrfqText = await jcrfqResponse.text();
     parseJcrfqCSV(jcrfqText);
 
+    // 加载CCF分级数据 (两种方式同时尝试)
+    try {
+      // 方式1: 从内置数据直接加载
+      console.log('开始从内置数据加载CCF分级数据...');
+      processBuiltInCCFData();
+      
+      // 方式2: 尝试从dataGen.js加载
+      console.log('开始从dataGen.js加载CCF分级数据...');
+      const ccfResponse = await fetch(chrome.runtime.getURL('/data/dataGen.js'));
+      if (ccfResponse.ok) {
+        const ccfText = await ccfResponse.text();
+        console.log(`获取到dataGen.js, 内容长度: ${ccfText.length}字节`);
+        parseCCFData(ccfText);
+      } else {
+        console.warn(`dataGen.js加载失败: ${ccfResponse.status} ${ccfResponse.statusText}，使用内置数据`);
+      }
+    } catch (ccfError) {
+      console.error('从外部加载CCF分级数据时出错:', ccfError);
+      console.log('使用内置的CCF数据作为备份');
+    }
+
     console.log('CSV数据加载完成');
+    console.log(`期刊数据统计: 中科院分区=${Object.keys(zkyfqMap).length}, JCR分区=${Object.keys(jcrfqMap).length}, CCF分级=${Object.keys(ccfMap).length}`);
   } catch (error) {
     console.error('加载CSV文件时出错:', error);
   }
+}
+
+// 处理内置的CCF数据
+function processBuiltInCCFData() {
+  console.log(`处理内置CCF数据，共 ${CCF_RANKINGS.length} 条记录`);
+  let validEntries = 0;
+  
+  for (const item of CCF_RANKINGS) {
+    const rank = item.rank;
+    const abbr = item.abbr;
+    const fullName = item.name;
+    
+    // 处理期刊全名
+    const processedFullName = processJournalName(fullName);
+    
+    if (processedFullName) {
+      // 存储CCF分级信息 - 主索引
+      ccfMap[processedFullName] = { rank, originalName: fullName };
+      validEntries++;
+      
+      // 创建多种变体来增加匹配概率
+      const nameParts = fullName.split(/[\s:,\-()]+/).filter(p => p.length > 2);
+      for (const part of nameParts) {
+        const processedPart = processJournalName(part);
+        if (processedPart && processedPart.length > 3 && processedPart !== processedFullName) {
+          ccfCommonNames[processedPart] = processedFullName;
+        }
+      }
+    }
+    
+    // 如果有缩写，也存储一份
+    if (abbr) {
+      const processedAbbr = processJournalName(abbr);
+      if (processedAbbr) {
+        ccfMap[processedAbbr] = { rank, originalName: fullName, isAbbr: true };
+        ccfAbbreviationMap[processedAbbr] = processedFullName;
+        validEntries++;
+      }
+    }
+  }
+  
+  console.log(`内置CCF数据处理完成，共 ${validEntries} 条有效记录`);
+  console.log(`建立了 ${Object.keys(ccfAbbreviationMap).length} 个缩写映射和 ${Object.keys(ccfCommonNames).length} 个部分名称映射`);
 }
 
 // 解析zkyfq.csv
@@ -85,6 +249,77 @@ function parseCSVLine(line) {
   return result;
 }
 
+// 解析CCF分级数据
+function parseCCFData(dataText) {
+  try {
+    // 从dataGen.js提取CCF分级列表
+    const ccfRankListMatch = dataText.match(/const ccfRankList\s*=\s*([^;]+);/);
+    if (!ccfRankListMatch) {
+      console.error('无法在dataGen.js中找到ccfRankList');
+      return;
+    }
+
+    const ccfRankListStr = ccfRankListMatch[1]
+      .replace(/\s*\+\s*/g, '')  // 移除字符串连接符
+      .replace(/"/g, '')         // 移除引号
+      .trim();
+
+    const lines = ccfRankListStr.split('\\n');
+    console.log(`CCF数据包含 ${lines.length} 行记录`);
+    
+    let validEntries = 0;
+    let skippedEntries = 0;
+
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      
+      const parts = line.split('\t');
+      if (parts.length < 3) {
+        skippedEntries++;
+        continue;
+      }
+      
+      const rank = parts[0].trim();  // A, B 或 C
+      const abbr = parts[1].trim();  // 缩写
+      const fullName = parts[2].trim();  // 完整名称
+      
+      // 处理期刊全名，用于匹配
+      const processedFullName = processJournalName(fullName);
+      
+      if (processedFullName) {
+        // 存储CCF分级信息 - 主索引
+        ccfMap[processedFullName] = { rank, originalName: fullName };
+        validEntries++;
+        
+        // 创建多种变体来增加匹配概率
+        const nameParts = fullName.split(/[\s:,\-()]+/).filter(p => p.length > 2);
+        for (const part of nameParts) {
+          const processedPart = processJournalName(part);
+          if (processedPart && processedPart.length > 3 && processedPart !== processedFullName) {
+            ccfCommonNames[processedPart] = processedFullName;
+          }
+        }
+      }
+      
+      // 如果有缩写，也存储一份
+      if (abbr) {
+        const processedAbbr = processJournalName(abbr);
+        if (processedAbbr) {
+          ccfMap[processedAbbr] = { rank, originalName: fullName, isAbbr: true };
+          ccfAbbreviationMap[processedAbbr] = processedFullName;
+          validEntries++;
+        }
+      }
+    }
+    
+    console.log(`CCF分级数据加载完成，共 ${validEntries} 条有效记录，${skippedEntries} 条无效记录`);
+    console.log(`建立了 ${Object.keys(ccfAbbreviationMap).length} 个缩写映射和 ${Object.keys(ccfCommonNames).length} 个部分名称映射`);
+  } catch (error) {
+    console.error('解析CCF分级数据时出错:', error);
+    console.error('错误堆栈:', error.stack);
+  }
+}
+
 // 提取标题、期刊信息和索引
 function extractTitlesAndJournals() {
   const papers = [];
@@ -107,6 +342,7 @@ function extractTitlesAndJournals() {
       // 获取额外信息
       const zkyInfo = zkyfqMap[processedJournal] || { 大类分区: '未知', Top: '否' };
       const jcrInfo = jcrfqMap[processedJournal] || { IF_2023: '未知', IF_Quartile: '未知' };
+      const ccfInfo = getCCFRank(processedJournal); // 使用增强版的CCF等级获取函数
 
       papers.push({ 
         title, 
@@ -119,7 +355,8 @@ function extractTitlesAndJournals() {
         大类分区: zkyInfo.大类分区,
         Top: zkyInfo.Top,
         IF_2023: jcrInfo.IF_2023,
-        IF_Quartile: jcrInfo.IF_Quartile
+        IF_Quartile: jcrInfo.IF_Quartile,
+        CCF等级: ccfInfo.rank // CCF分级信息
       }); // 加入摘要和处理后的期称及额外信息
     }
   });
@@ -159,6 +396,13 @@ function sleep(ms) {
 // 获取期刊信息
 async function fetchJournalInfo(papers) {
   const processedPapers = [];
+  const matchStatistics = {
+    total: 0,
+    directMatches: 0,
+    partialMatches: 0,
+    abbrMatches: 0,
+    noMatches: 0
+  };
 
   // 显示"正在匹配期刊信息，请稍等..."提示
   showMatchingStatus('正在匹配期刊信息，请稍等...', true);
@@ -201,10 +445,33 @@ async function fetchJournalInfo(papers) {
       journal = journal.toUpperCase();
 
       const processedJournal = processJournalName(journal);
+      matchStatistics.total++;
+
+      // 先检查ccfMap中是否直接存在
+      if (ccfMap[processedJournal]) {
+        matchStatistics.directMatches++;
+      } else if (ccfCommonNames[processedJournal]) {
+        matchStatistics.partialMatches++;
+      } else if (processedJournal.length <= 8) {
+        // 检查是否是缩写匹配
+        let found = false;
+        for (const abbr in ccfAbbreviationMap) {
+          if ((abbr.includes(processedJournal) || processedJournal.includes(abbr)) && 
+              Math.abs(abbr.length - processedJournal.length) <= 2) {
+            matchStatistics.abbrMatches++;
+            found = true;
+            break;
+          }
+        }
+        if (!found) matchStatistics.noMatches++;
+      } else {
+        matchStatistics.noMatches++;
+      }
 
       // 获取额外信息
-      const zkyInfo = zkyfqMap[processedJournal] || { 大类分区: '知', Top: '否' };
+      const zkyInfo = zkyfqMap[processedJournal] || { 大类分区: '未知', Top: '否' };
       const jcrInfo = jcrfqMap[processedJournal] || { IF_2023: '未知', IF_Quartile: '未知' };
+      const ccfInfo = getCCFRank(processedJournal); // 使用增强版的CCF等级获取函数
 
       return { 
         ...paper, 
@@ -213,10 +480,10 @@ async function fetchJournalInfo(papers) {
         大类分区: zkyInfo.大类分区,
         Top: zkyInfo.Top,
         IF_2023: jcrInfo.IF_2023,
-        IF_Quartile: jcrInfo.IF_Quartile
+        IF_Quartile: jcrInfo.IF_Quartile,
+        CCF等级: ccfInfo.rank // CCF分级信息
       };
     });
-
 
     const batchResults = await Promise.all(batchPromises);
     processedPapers.push(...batchResults);
@@ -224,6 +491,14 @@ async function fetchJournalInfo(papers) {
     // 每处理完一批次，暂停200毫秒
     await sleep(100);
   }
+
+  // 打印匹配统计信息
+  console.log('CCF匹配统计:', matchStatistics);
+  console.log(`CCF匹配率: ${((matchStatistics.total - matchStatistics.noMatches) / matchStatistics.total * 100).toFixed(2)}%`);
+  console.log(`- 直接匹配: ${matchStatistics.directMatches} (${(matchStatistics.directMatches / matchStatistics.total * 100).toFixed(2)}%)`);
+  console.log(`- 部分匹配: ${matchStatistics.partialMatches} (${(matchStatistics.partialMatches / matchStatistics.total * 100).toFixed(2)}%)`);
+  console.log(`- 缩写匹配: ${matchStatistics.abbrMatches} (${(matchStatistics.abbrMatches / matchStatistics.total * 100).toFixed(2)}%)`);
+  console.log(`- 未匹配: ${matchStatistics.noMatches} (${(matchStatistics.noMatches / matchStatistics.total * 100).toFixed(2)}%)`);
 
   // 隐藏"正在匹配期刊信息，请稍等..."提示，显示"匹配完成"提示
   showMatchingStatus('匹配完成', false);
@@ -273,6 +548,10 @@ function displayTitlesWithJournals(papers) {
         displayInfo += ` | 中科院${paper.大类分区}区TOP`;
       } else {
         displayInfo += ` | 中科院${paper.大类分区}区`;
+      }
+      // 添加CCF分级信息
+      if (paper.CCF等级 && paper.CCF等级 !== '未知') {
+        displayInfo += ` | CCF ${paper.CCF等级}`;
       }
       processedJournalNameMap[paper.processedJournal] = `${paper.journal} | ${displayInfo}`;
     }
@@ -324,6 +603,8 @@ function displayTitlesWithJournals(papers) {
                   <span class="info-tag if-tag">IF: ${jcrfqMap[journal]?.IF_2023 || '未知'}</span>
                   <span class="info-tag jcr-tag">JCR: ${jcrfqMap[journal]?.IF_Quartile || '未知'}</span>
                   <span class="info-tag cas-tag">中科院${zkyfqMap[journal]?.大类分区 || '未知'}区${zkyfqMap[journal]?.Top === '是' ? 'TOP' : ''}</span>
+                  ${ccfMap[journal]?.rank && ccfMap[journal]?.rank !== '未知' ? 
+                    `<span class="info-tag ccf-tag">CCF ${ccfMap[journal].rank}</span>` : ''}
                   <span style="margin-left: 5px;">(${journalCountMap[journal]})</span>
                 </span>
               </label>
@@ -358,6 +639,7 @@ function displayTitlesWithJournals(papers) {
             <option value="count-asc">数量升序</option>
             <option value="if-desc">IF降序</option>
             <option value="if-asc">IF升序</option>
+            <option value="ccf-rank">CCF等级</option>
           </select>
           <div style="margin-top: 10px;">
             <label>最小IF值：</label>
@@ -381,6 +663,14 @@ function displayTitlesWithJournals(papers) {
               <label><input type="checkbox" name="cas-filter" value="2"> 2区</label>
               <label><input type="checkbox" name="cas-filter" value="3"> 3区</label>
               <label><input type="checkbox" name="cas-filter" value="4"> 4区</label>
+            </div>
+          </div>
+          <div style="margin-top: 10px;">
+            <label>CCF等级：</label>
+            <div>
+              <label><input type="checkbox" name="ccf-filter" value="A"> A类</label>
+              <label><input type="checkbox" name="ccf-filter" value="B"> B类</label>
+              <label><input type="checkbox" name="ccf-filter" value="C"> C类</label>
             </div>
           </div>
           <div style="margin-top: 10px;">
@@ -456,6 +746,7 @@ function displayTitlesWithJournals(papers) {
                   <span class="info-tag if-tag">IF: ${paper.IF_2023}</span>
                   <span class="info-tag jcr-tag">JCR: ${paper.IF_Quartile}</span>
                   <span class="info-tag cas-tag">中科院${paper.大类分区}区${paper.Top === '是' ? 'TOP' : ''}</span>
+                  ${paper.CCF等级 && paper.CCF等级 !== '未知' ? `<span class="info-tag ccf-tag">CCF ${paper.CCF等级}</span>` : ''}
                 </span></strong>
               </small>
               <br>
@@ -551,6 +842,10 @@ function displayTitlesWithJournals(papers) {
     .cas-tag {
       background-color: #E8F5E9;
       color: #388E3C;
+    }
+    .ccf-tag {
+      background-color: #E3F2FD;
+      color: #1565C0;
     }
     .cite-button {
       position: absolute;
@@ -707,6 +1002,10 @@ function displayTitlesWithJournals(papers) {
       background-color: #E8F5E9;
       color: #388E3C;
     }
+    .ccf-tag {
+      background-color: #E3F2FD;
+      color: #1565C0;
+    }
     #journal-filter label:hover {
       background-color: #f5f5f5;
     }
@@ -739,6 +1038,13 @@ function displayTitlesWithJournals(papers) {
         const ifB = parseFloat(jcrfqMap[b]?.IF_2023) || 0;
         return ifA - ifB;
       });
+    } else if (sortValue === 'ccf-rank') {
+      // 按CCF等级排序: A > B > C > 未知
+      sortedJournals.sort((a, b) => {
+        const rankA = ccfMap[a]?.rank || 'Z'; // 未知等级用Z表示，排在最后
+        const rankB = ccfMap[b]?.rank || 'Z';
+        return rankA.localeCompare(rankB);
+      });
     }
 
     // 重新生成筛选选项
@@ -747,6 +1053,7 @@ function displayTitlesWithJournals(papers) {
       <label><input type="checkbox" value="all" checked> <span class="journal-option">全部</span></label>
       ${sortedJournals.map(journal => {
         const journalInfo = papers.find(p => p.processedJournal === journal);
+        const ccfInfo = getCCFRank(journal);
         return `
           <label title="${processedJournalNameMap[journal]}">
             <input type="checkbox" value="${journal}"> 
@@ -755,6 +1062,8 @@ function displayTitlesWithJournals(papers) {
               <span class="info-tag if-tag">IF: ${jcrfqMap[journal]?.IF_2023 || '未知'}</span>
               <span class="info-tag jcr-tag">JCR: ${jcrfqMap[journal]?.IF_Quartile || '未知'}</span>
               <span class="info-tag cas-tag">中科院${zkyfqMap[journal]?.大类分区 || '未知'}区${zkyfqMap[journal]?.Top === '是' ? 'TOP' : ''}</span>
+              ${ccfInfo.rank && ccfInfo.rank !== '未知' ? 
+                `<span class="info-tag ccf-tag">CCF ${ccfInfo.rank}</span>` : ''}
               <span style="margin-left: 5px;">(${journalCountMap[journal]})</span>
             </span>
           </label>
@@ -831,6 +1140,8 @@ function displayTitlesWithJournals(papers) {
       .map(cb => cb.value);
     const selectedCAS = Array.from(document.querySelectorAll('input[name="cas-filter"]:checked'))
       .map(cb => cb.value);
+    const selectedCCF = Array.from(document.querySelectorAll('input[name="ccf-filter"]:checked'))
+      .map(cb => cb.value);
     const isTopSelected = document.getElementById('top-filter').checked;
     const ifMin = parseFloat(document.getElementById('if-min').value);
 
@@ -846,15 +1157,18 @@ function displayTitlesWithJournals(papers) {
       const journal = item.getAttribute('data-journal');
       const journalInfo = jcrfqMap[journal] || {};
       const casInfo = zkyfqMap[journal] || {};
+      // 使用getCCFRank函数获取CCF分级
+      const ccfInfo = getCCFRank(journal);
       const journalIF = parseFloat(journalInfo.IF_2023) || 0;
 
       const isJCRMatch = selectedJCR.length === 0 || selectedJCR.includes(journalInfo.IF_Quartile);
       const isCASMatch = selectedCAS.length === 0 || selectedCAS.includes(casInfo.大类分区);
+      const isCCFMatch = selectedCCF.length === 0 || selectedCCF.includes(ccfInfo.rank);
       const isTopMatch = !isTopSelected || casInfo.Top === '是';
       const isIFMatch = isNaN(ifMin) || journalIF >= ifMin;
 
       if ((selectedJournals.includes('all') || selectedJournals.includes(journal)) &&
-          isJCRMatch && isCASMatch && isTopMatch && isIFMatch) {
+          isJCRMatch && isCASMatch && isCCFMatch && isTopMatch && isIFMatch) {
         item.style.display = '';
         item.querySelector('.paper-content').style.backgroundColor = visibleIndex % 2 === 0 ? '#f9f9f9' : '#e6f7ff';
         visibleIndex++;
@@ -892,12 +1206,14 @@ function displayTitlesWithJournals(papers) {
     const journalFilter = document.getElementById('journal-filter');
     const jcrFilters = document.querySelectorAll('input[name="jcr-filter"]');
     const casFilters = document.querySelectorAll('input[name="cas-filter"]');
+    const ccfFilters = document.querySelectorAll('input[name="ccf-filter"]');
     const topFilter = document.getElementById('top-filter');
     const ifMinInput = document.getElementById('if-min');
 
     journalFilter.addEventListener('change', filterJournals);
     jcrFilters.forEach(filter => filter.addEventListener('change', filterJournals));
     casFilters.forEach(filter => filter.addEventListener('change', filterJournals));
+    ccfFilters.forEach(filter => filter.addEventListener('change', filterJournals));
     topFilter.addEventListener('change', filterJournals);
     ifMinInput.addEventListener('input', filterJournals);
   }
@@ -1811,6 +2127,10 @@ function clearAllFilters() {
   const casFilters = document.querySelectorAll('input[name="cas-filter"]');
   casFilters.forEach(filter => filter.checked = false);
 
+  // 重置CCF等级筛选
+  const ccfFilters = document.querySelectorAll('input[name="ccf-filter"]');
+  ccfFilters.forEach(filter => filter.checked = false);
+
   // 重置TOP期刊筛选
   document.getElementById('top-filter').checked = false;
 
@@ -2180,4 +2500,72 @@ function hideProgressBar() {
   if (progressContainer) {
     progressContainer.style.display = 'none';
   }
+}
+
+// 获取CCF分级信息的辅助函数，使用多种匹配策略
+function getCCFRank(processedJournal) {
+  // 记录匹配过程
+  console.log(`尝试获取CCF等级 - 期刊: "${processedJournal}"`);
+  
+  // 1. 直接查找
+  if (ccfMap[processedJournal]) {
+    console.log(`直接匹配成功: "${processedJournal}" => ${ccfMap[processedJournal].rank}`);
+    return ccfMap[processedJournal];
+  }
+  
+  // 2. 检查是否存在于部分名称映射中
+  if (ccfCommonNames[processedJournal]) {
+    const fullName = ccfCommonNames[processedJournal];
+    console.log(`部分名称匹配成功: "${processedJournal}" => "${fullName}" => ${ccfMap[fullName].rank}`);
+    return ccfMap[fullName];
+  }
+  
+  // 3. 尝试通过部分匹配查找
+  const journalParts = processedJournal.match(/.{4,}/g) || [];
+  for (const part of journalParts) {
+    if (part.length < 4) continue;
+    
+    // 查找含有这个部分的任何CCF期刊
+    for (const [key, value] of Object.entries(ccfMap)) {
+      if (key.includes(part) || (value.originalName && value.originalName.toUpperCase().includes(part))) {
+        console.log(`部分内容匹配: "${processedJournal}" => "${key}" (${value.rank}), 匹配部分: "${part}"`);
+        return value;
+      }
+    }
+  }
+  
+  // 4. 尝试匹配缩写
+  if (processedJournal.length <= 8) {
+    for (const [abbr, fullName] of Object.entries(ccfAbbreviationMap)) {
+      // 对于短名称，允许更宽松的匹配
+      if ((abbr.includes(processedJournal) || processedJournal.includes(abbr)) && 
+          Math.abs(abbr.length - processedJournal.length) <= 2) {
+        console.log(`缩写匹配: "${processedJournal}" => "${abbr}" => "${fullName}" => ${ccfMap[fullName].rank}`);
+        return ccfMap[fullName];
+      }
+    }
+  }
+  
+  // 5. 尝试更宽松的匹配（仅对较长的期刊名）
+  if (processedJournal.length > 8) {
+    for (const [key, value] of Object.entries(ccfMap)) {
+      // 如果期刊名包含CCF期刊名的大部分内容
+      if (key.length > 8 && (key.includes(processedJournal) || processedJournal.includes(key))) {
+        console.log(`宽松匹配: "${processedJournal}" => "${key}" => ${value.rank}`);
+        return value;
+      }
+      
+      // 检查原始名称
+      if (value.originalName) {
+        const processedOriginal = processJournalName(value.originalName);
+        if (processedOriginal.includes(processedJournal) || processedJournal.includes(processedOriginal)) {
+          console.log(`原始名称匹配: "${processedJournal}" => "${value.originalName}" => ${value.rank}`);
+          return value;
+        }
+      }
+    }
+  }
+  
+  console.log(`未找到CCF等级: "${processedJournal}"`);
+  return { rank: '未知' };
 }
