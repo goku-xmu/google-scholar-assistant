@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "谷歌学术助手",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "提取和搜索谷歌学术论文信息的浏览器插件",
   "icons": {
     "16": "icons/icon16.png",
