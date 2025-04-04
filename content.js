@@ -1363,27 +1363,8 @@ function displayTitlesWithJournals(papers) {
 
         // 获取所有摘要部分
         const abstractSections = xmlDoc.querySelectorAll("Abstract AbstractText");
-        
-        // 获取年份、作者和期刊信息
-        const yearElement = xmlDoc.querySelector("PubDate Year");
-        const year = yearElement ? yearElement.textContent : null;
-        
-        // 获取作者信息
-        const authorElements = xmlDoc.querySelectorAll("AuthorList Author");
-        const authors = Array.from(authorElements).map(author => {
-          const lastName = author.querySelector("LastName")?.textContent || "";
-          const firstName = author.querySelector("ForeName")?.textContent || 
-                           author.querySelector("FirstName")?.textContent || "";
-          return firstName && lastName ? `${lastName} ${firstName}` : lastName || firstName;
-        }).join("; ");
-        
-        // 获取期刊信息
-        const journalElement = xmlDoc.querySelector("Journal Title") || 
-                              xmlDoc.querySelector("ISOAbbreviation");
-        const journal = journalElement ? journalElement.textContent : null;
-        
         if (abstractSections.length === 0) {
-          return { abstract: null, year, authors, journal };
+          return null;
         }
 
         let abstractParts = [];
@@ -1405,25 +1386,15 @@ function displayTitlesWithJournals(papers) {
             abstractParts.unshift('Abstract');
           }
           
-          return { 
-            abstract: abstractParts.join('\n\n'),
-            year,
-            authors,
-            journal
-          };
+          return abstractParts.join('\n\n');
         } 
         // 处理非结构化摘要
         else {
-          return { 
-            abstract: abstractSections[0].textContent.trim(),
-            year,
-            authors,
-            journal
-          };
+          return abstractSections[0].textContent.trim();
         }
       } catch (error) {
         console.error('获取摘要时出错:', error);
-        return { abstract: null, year: null, authors: null, journal: null };
+        return null;
       }
     }
 
@@ -1444,26 +1415,15 @@ function displayTitlesWithJournals(papers) {
           let doi = null;
           let pmid = null;
           let abstract = null;
-          let year = null;
-          let authors = null;
-          let journal = null;
 
           // 从Crossref获取DOI
           if (crossrefResult.status === 'fulfilled' && crossrefResult.value) {
             doi = crossrefResult.value.DOI;
-            // 获取Crossref的年份、作者和期刊信息
-            year = crossrefResult.value.Year || year;
-            authors = crossrefResult.value.Authors || authors;
-            journal = crossrefResult.value.Journal || journal;
           }
 
           // 从PubMed获取PMID和摘要
           if (pubmedResult.status === 'fulfilled' && pubmedResult.value) {
             pmid = pubmedResult.value.PMID;
-            // 获取PubMed的年份、作者和期刊信息（如果Crossref没有提供）
-            year = year || pubmedResult.value.Year;
-            authors = authors || pubmedResult.value.Authors;
-            journal = journal || pubmedResult.value.Journal;
           }
 
           updateProgress(i, titles.length, `正在处理: ${title.substring(0, 50)}...`);
@@ -1475,11 +1435,7 @@ function displayTitlesWithJournals(papers) {
 
           // 如果有PMID，获取摘要
           if (pmid) {
-            const abstractInfo = await getAbstractWithRetry(pmid);
-            abstract = abstractInfo.abstract;
-            year = abstractInfo.year;
-            authors = abstractInfo.authors;
-            journal = abstractInfo.journal;
+            abstract = await getAbstractWithRetry(pmid);
           }
 
           return {
@@ -1487,9 +1443,6 @@ function displayTitlesWithJournals(papers) {
             doi,
             pmid,
             abstract,
-            year,
-            authors,
-            journal,
             status: abstract ? 'success' : 'no_abstract'
           };
         } catch (error) {
@@ -1587,24 +1540,6 @@ function displayTitlesWithJournals(papers) {
           cursor: pointer;
           margin-right: 10px;
         ">复制所有摘要</button>
-        <button id="export-abstracts-txt" style="
-          padding: 5px 15px;
-          border: none;
-          border-radius: 4px;
-          background: #d3baf8;
-          color: black;
-          cursor: pointer;
-          margin-right: 10px;
-        ">导出TXT文件</button>
-        <button id="export-abstracts-json" style="
-          padding: 5px 15px;
-          border: none;
-          border-radius: 4px;
-          background: #d3baf8;
-          color: black;
-          cursor: pointer;
-          margin-right: 10px;
-        ">导出JSON</button>
         <button id="retry-failed" style="
           padding: 5px 15px;
           border: none;
@@ -1623,9 +1558,6 @@ function displayTitlesWithJournals(papers) {
               `<div>
                 ${result.doi ? `<p><strong>DOI:</strong> ${result.doi}</p>` : ''}
                 ${result.pmid ? `<p><strong>PMID:</strong> ${result.pmid}</p>` : ''}
-                ${result.year ? `<p><strong>年份:</strong> ${result.year}</p>` : ''}
-                ${result.authors ? `<p><strong>作者:</strong> ${result.authors}</p>` : ''}
-                ${result.journal ? `<p><strong>来源:</strong> ${result.journal}</p>` : ''}
                 <p><strong>摘要:</strong></p>
                 <p>${result.abstract || '未找到摘要'}</p>
               </div>`
@@ -1651,9 +1583,6 @@ function displayTitlesWithJournals(papers) {
         return `${index + 1}. ${result.title}\n` +
                `${result.doi ? `DOI: ${result.doi}\n` : ''}` +
                `${result.pmid ? `PMID: ${result.pmid}\n` : ''}` +
-               `${result.year ? `年份: ${result.year}\n` : ''}` +
-               `${result.authors ? `作者: ${result.authors}\n` : ''}` +
-               `${result.journal ? `来源: ${result.journal}\n` : ''}` +
                `摘要:\n${result.abstract || '未找到摘要'}\n\n`;
       }).join('---\n\n');
 
@@ -1663,53 +1592,6 @@ function displayTitlesWithJournals(papers) {
         console.error('复制失败:', err);
         alert('复制失败，请手动复制');
       });
-    };
-
-    // 导出TXT文件按钮事件
-    document.getElementById('export-abstracts-txt').onclick = function() {
-      const abstractsText = abstractResults.map((result, index) => {
-        return `${index + 1}. ${result.title}\n` +
-               `${result.doi ? `DOI: ${result.doi}\n` : ''}` +
-               `${result.pmid ? `PMID: ${result.pmid}\n` : ''}` +
-               `${result.year ? `年份: ${result.year}\n` : ''}` +
-               `${result.authors ? `作者: ${result.authors}\n` : ''}` +
-               `${result.journal ? `来源: ${result.journal}\n` : ''}` +
-               `摘要:\n${result.abstract || '未找到摘要'}\n\n`;
-      }).join('---\n\n');
-
-      const blob = new Blob([abstractsText], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `abstracts_${new Date().getTime()}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    };
-
-    // 导出JSON文件按钮事件
-    document.getElementById('export-abstracts-json').onclick = function() {
-      const jsonData = abstractResults.map(result => ({
-        title: result.title,
-        doi: result.doi || null,
-        pmid: result.pmid || null,
-        year: result.year || null,
-        authors: result.authors || null,
-        journal: result.journal || null,
-        abstract: result.abstract || null,
-        status: result.status
-      }));
-
-      const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `abstracts_${new Date().getTime()}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
     };
 
     // 重试失败项按钮事件
