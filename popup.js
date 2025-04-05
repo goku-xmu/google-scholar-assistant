@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCategories();
   });
 
+  // 初始化自定义弹窗
+  initCustomAlert();
+  initCustomConfirm();
 
   const dropdown = document.getElementById('journal-dropdown');
   const dropdownButton = dropdown.querySelector('.dropdown-button');
@@ -55,11 +58,11 @@ document.addEventListener('DOMContentLoaded', () => {
           if (validateImportedData(importedData)) {
             importJournalRanges(importedData);
           } else {
-            alert('导入的JSON格式不正确。请确保文件符合标准格式。');
+            showCustomAlert('导入的JSON格式不正确。请确保文件符合标准格式。');
           }
         } catch (error) {
           console.error('JSON解析错误:', error);
-          alert('无法解析JSON文件。请检查文件格式。');
+          showCustomAlert('无法解析JSON文件。请检查文件格式。');
         }
       };
       reader.readAsText(file);
@@ -87,19 +90,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const journalsText = document.getElementById('new-category-journals').value.trim();
 
     if (!categoryName) {
-      alert('类别名称不能为空。');
+      showCustomAlert('类别名称不能为空。');
       return;
     }
 
     if (!journalsText) {
-      alert('期刊名称不能为空。');
+      showCustomAlert('期刊名称不能为空。');
       return;
     }
 
     const journals = journalsText.split('\n').map(j => j.trim()).filter(j => j);
 
     if (journals.length === 0) {
-      alert('请至少输入一个期刊名称。');
+      showCustomAlert('请至少输入一个期刊名称。');
       return;
     }
 
@@ -109,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
       clearModalInputs();
     }).catch(err => {
       console.error('添加新类别时出错:', err);
-      alert('添加新类别失败，请重试。');
+      showCustomAlert('添加新类别失败，请重试。');
     });
   });
 
@@ -292,10 +295,12 @@ function renderCategories() {
 
           // 添加删除事件
           deleteJournalBtn.addEventListener('click', () => {
-            if (confirm('确定要删除这个期刊吗？')) {
-              removeJournal(category, journal);
-              journalDiv.remove();
-            }
+            showCustomConfirm('确定要删除这个期刊吗？', (result) => {
+              if (result) {
+                removeJournal(category, journal);
+                journalDiv.remove();
+              }
+            });
           });
 
           journalDiv.appendChild(journalInput);
@@ -334,9 +339,9 @@ function renderCategories() {
         // 添加拖动事件
         addDragAndDropHandlers(categoryDiv);
 
-        // 插入类别到"导入类别"按钮之前
-        const importCategoryDiv = document.getElementById('import-category');
-        dropdownContent.insertBefore(categoryDiv, importCategoryDiv);
+        // 在导入导出容器之前插入类别
+        const importExportContainer = document.querySelector('.import-export-container');
+        dropdownContent.insertBefore(categoryDiv, importExportContainer);
       }
     });
 
@@ -371,7 +376,7 @@ function bindCategoryEvents() {
     });
   });
 
-  // 注意：我们不再在这里绑定删除按钮的事件，因为我们使用了事��委托
+  // 注意：我们不再在这里绑定删除按钮的事件，因为我们使用了事件委托
 }
 
 
@@ -383,13 +388,13 @@ function copyJournalsByCategory(category) {
       const journals = journalSources[category];
       const journalList = journals.join('\n'); // 使用换行符分隔
       navigator.clipboard.writeText(journalList).then(() => {
-        alert(`已复制【${category}】类别的期刊源！`);
+        showCustomAlert(`已复制【${category}】类别的期刊源！`);
       }).catch(err => {
         console.error('复制失败:', err);
-        alert(`复制【${category}】类别的期刊源失败，请手动复制。`);
+        showCustomAlert(`复制【${category}】类别的期刊源失败，请手动复制。`);
       });
     } else {
-      alert('未找到指定的期刊类别。');
+      showCustomAlert('未找到指定的期刊类别。');
     }
   });
 }
@@ -423,15 +428,16 @@ function generateAndCopyLink() {
     const startYear = document.getElementById('start-year').value;
     const endYear = document.getElementById('end-year').value;
     const articleType = document.getElementById('article-type').value; // 获取文章类型
+    const resultsPerPage = document.getElementById('results-per-page').value; // 获取每页结果数
 
     // 输入验证
     if (!query && selectedCategories.length === 0) {
-      alert('请输入搜索信息或选择至少一个期刊类别。');
+      showCustomAlert('请输入搜索信息或选择至少一个期刊类别。');
       return;
     }
 
     if (startYear && endYear && parseInt(startYear) > parseInt(endYear)) {
-      alert('起始年份不能晚于结束年份。');
+      showCustomAlert('起始年份不能晚于结束年份。');
       return;
     }
 
@@ -466,15 +472,20 @@ function generateAndCopyLink() {
     // 添加文章类型
     url += `as_rr=${articleType}&`;
 
-    // 设置每页显示数量为20
-    url += `num=20`;
+    // 设置每页显示数量
+    if (resultsPerPage !== "10") { // 当选择10时不添加该参数，因为它是默认值
+      url += `num=${resultsPerPage}`;
+    } else {
+      // 移除URL末尾可能的&符号
+      url = url.endsWith('&') ? url.slice(0, -1) : url;
+    }
 
     // 复制链接到剪贴板
     navigator.clipboard.writeText(url).then(() => {
-      alert('链接已生成并复制到剪贴板！');
+      showCustomAlert('链接已生成并复制到剪贴板！');
     }).catch(err => {
       console.error('复制失败:', err);
-      alert('复制链接失败，请手动复制。');
+      showCustomAlert('复制链接失败，请手动复制。');
     });
   });
 }
@@ -490,15 +501,16 @@ function directSearch() {
     const startYear = document.getElementById('start-year').value;
     const endYear = document.getElementById('end-year').value;
     const articleType = document.getElementById('article-type').value; // 获取文章类型
+    const resultsPerPage = document.getElementById('results-per-page').value; // 获取每页结果数
 
     // 输入验证
     if (!query && selectedCategories.length === 0) {
-      alert('请输入搜索信息或选择至少一个期刊类别。');
+      showCustomAlert('请输入搜索信息或选择至少一个期刊类别。');
       return;
     }
 
     if (startYear && endYear && parseInt(startYear) > parseInt(endYear)) {
-      alert('起始年份不能晚于结束年份。');
+      showCustomAlert('起始年份不能晚于结束年份。');
       return;
     }
 
@@ -533,8 +545,13 @@ function directSearch() {
     // 添加文章类型
     url += `as_rr=${articleType}&`;
 
-    // 设置每页显示数量为20
-    url += `num=20`;
+    // 设置每页显示数量
+    if (resultsPerPage !== "10") { // 当选择10时不添加该参数，因为它是默认值
+      url += `num=${resultsPerPage}`;
+    } else {
+      // 移除URL末尾可能的&符号
+      url = url.endsWith('&') ? url.slice(0, -1) : url;
+    }
 
     // 在新标签页中打开链接
     chrome.tabs.create({ url: url });
@@ -550,7 +567,7 @@ function addNewCategory(categoryName, journals) {
       let categoryOrder = data.categoryOrder || [];
 
       if (journalSources.hasOwnProperty(categoryName)) {
-        alert('该类别名称已存在，请选择其他名称。');
+        showCustomAlert('该类别名称已存在，请选择其他名称。');
         reject('类别名称已存在');
         return;
       }
@@ -582,20 +599,22 @@ function savePreferences() {
     const startYear = document.getElementById('start-year').value;
     const endYear = document.getElementById('end-year').value;
     const articleType = document.getElementById('article-type').value; // 获取文章类型
+    const resultsPerPage = document.getElementById('results-per-page').value; // 获取每页结果数
 
     chrome.storage.local.set({
       searchQuery: query,
       selectedCategories: selectedCategories,
       startYear: startYear,
       endYear: endYear,
-      articleType: articleType // 保存文章类型
+      articleType: articleType, // 保存文章类型
+      resultsPerPage: resultsPerPage // 保存每页结果数
     });
   });
 }
 
 // 加载用户选择从chrome.storage
 function loadPreferences() {
-  chrome.storage.local.get(['searchQuery', 'selectedCategories', 'startYear', 'endYear', 'articleType'], (data) => {
+  chrome.storage.local.get(['searchQuery', 'selectedCategories', 'startYear', 'endYear', 'articleType', 'resultsPerPage'], (data) => {
     if (data.searchQuery) {
       document.getElementById('search-query').value = data.searchQuery;
     }
@@ -615,6 +634,9 @@ function loadPreferences() {
     }
     if (data.articleType) {
       document.getElementById('article-type').value = data.articleType; // 加载文章类型
+    }
+    if (data.resultsPerPage) {
+      document.getElementById('results-per-page').value = data.resultsPerPage; // 加载每页结果数
     }
   });
 }
@@ -695,7 +717,7 @@ function importJournalRanges(importedData) {
     }
 
     chrome.storage.local.set({journalSources: journalSources, categoryOrder: categoryOrder}, () => {
-      alert('期刊范围已成功导入，并与现有类别并。');
+      showCustomAlert('期刊范围已成功导入，并与现有类别合并。');
       renderCategories();
     });
   });
@@ -790,7 +812,78 @@ function addJournalToCategory(category, newJournal) {
         renderCategories(); // 重新渲染以显示新添加的期刊
       });
     } else {
-      alert('该期刊已存在于此类别中');
+      showCustomAlert('该期刊已存在于此类别中');
     }
   });
+}
+
+// 初始化自定义提示弹窗
+function initCustomAlert() {
+  const customAlert = document.getElementById('custom-alert');
+  const confirmBtn = document.getElementById('alert-confirm');
+  
+  confirmBtn.addEventListener('click', () => {
+    customAlert.style.display = 'none';
+  });
+  
+  // 点击弹窗外部区域关闭
+  window.addEventListener('click', (event) => {
+    if (event.target === customAlert) {
+      customAlert.style.display = 'none';
+    }
+  });
+}
+
+// 自定义提示弹窗函数，替代原生alert
+function showCustomAlert(message) {
+  const customAlert = document.getElementById('custom-alert');
+  const alertMessage = document.getElementById('alert-message');
+  
+  alertMessage.textContent = message;
+  customAlert.style.display = 'block';
+}
+
+// 初始化自定义确认对话框
+function initCustomConfirm() {
+  const customConfirm = document.getElementById('custom-confirm');
+  const confirmYesBtn = document.getElementById('confirm-yes-btn');
+  const confirmNoBtn = document.getElementById('confirm-no-btn');
+  
+  // 点击弹窗外部区域关闭
+  window.addEventListener('click', (event) => {
+    if (event.target === customConfirm) {
+      customConfirm.style.display = 'none';
+      window.confirmCallback = null;
+    }
+  });
+  
+  // 点击"取消"按钮
+  confirmNoBtn.addEventListener('click', () => {
+    customConfirm.style.display = 'none';
+    if (window.confirmCallback) {
+      window.confirmCallback(false);
+      window.confirmCallback = null;
+    }
+  });
+  
+  // 点击"确定"按钮
+  confirmYesBtn.addEventListener('click', () => {
+    customConfirm.style.display = 'none';
+    if (window.confirmCallback) {
+      window.confirmCallback(true);
+      window.confirmCallback = null;
+    }
+  });
+}
+
+// 自定义确认对话框函数，替代原生confirm
+function showCustomConfirm(message, callback) {
+  const customConfirm = document.getElementById('custom-confirm');
+  const confirmMessage = document.getElementById('confirm-message');
+  
+  confirmMessage.textContent = message;
+  customConfirm.style.display = 'block';
+  
+  // 保存回调函数
+  window.confirmCallback = callback;
 }
