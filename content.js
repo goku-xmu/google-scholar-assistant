@@ -1585,24 +1585,53 @@ function displayTitlesWithJournals(papers) {
           cursor: pointer;
         ">关闭</button>
       </div>
-      <div style="margin-bottom: 20px;">
-        <button id="copy-all-abstracts" style="
-          padding: 5px 15px;
-          border: none;
-          border-radius: 4px;
-          background: #d3baf8;
-          color: black;
-          cursor: pointer;
-          margin-right: 10px;
-        ">复制所有摘要</button>
-        <button id="retry-failed" style="
-          padding: 5px 15px;
-          border: none;
-          border-radius: 4px;
-          background: ${failed > 0 ? '#d3baf8' : '#cccccc'};
-          color: black;
-          cursor: ${failed > 0 ? 'pointer' : 'not-allowed'};
-        ">重试失败项 (${failed})</button>
+      <div style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <button id="copy-all-abstracts" style="
+            padding: 5px 15px;
+            border: none;
+            border-radius: 4px;
+            background: #d3baf8;
+            color: black;
+            cursor: pointer;
+          ">复制所有摘要</button>
+        </div>
+        <div>
+          <button id="retry-failed" style="
+            padding: 5px 15px;
+            border: none;
+            border-radius: 4px;
+            background: ${failed > 0 ? '#d3baf8' : '#cccccc'};
+            color: black;
+            cursor: ${failed > 0 ? 'pointer' : 'not-allowed'};
+          ">重试失败项 (${failed})</button>
+        </div>
+        <div style="margin-left: auto; display: flex; gap: 10px;">
+          <button id="export-txt" style="
+            padding: 5px 15px;
+            border: none;
+            border-radius: 4px;
+            background: #d3baf8;
+            color: black;
+            cursor: pointer;
+          ">导出为TXT</button>
+          <button id="export-json" style="
+            padding: 5px 15px;
+            border: none;
+            border-radius: 4px;
+            background: #d3baf8;
+            color: black;
+            cursor: pointer;
+          ">导出为JSON</button>
+          <button id="export-csv" style="
+            padding: 5px 15px;
+            border: none;
+            border-radius: 4px;
+            background: #d3baf8;
+            color: black;
+            cursor: pointer;
+          ">导出为CSV</button>
+        </div>
       </div>
       <div>
         ${abstractResults.map((result, index) => `
@@ -1654,6 +1683,89 @@ function displayTitlesWithJournals(papers) {
         alert('复制失败，请手动复制');
       });
     };
+
+    // 导出为TXT按钮事件
+    document.getElementById('export-txt').onclick = function() {
+      const abstractsText = abstractResults.map((result, index) => {
+        return `${index + 1}. ${result.title}\n` +
+               `${result.journal ? `期刊: ${result.journal}\n` : ''}` +
+               `${result.year ? `发表年份: ${result.year}\n` : ''}` +
+               `${result.authors ? `作者: ${result.authors}\n` : ''}` +
+               `${result.doi ? `DOI: ${result.doi}\n` : ''}` +
+               `${result.pmid ? `PMID: ${result.pmid}\n` : ''}` +
+               `摘要:\n${result.abstract || '未找到摘要'}\n\n`;
+      }).join('---\n\n');
+
+      // 创建TXT文件并下载
+      downloadFile(abstractsText, 'paper_abstracts.txt', 'text/plain');
+    };
+
+    // 导出为JSON按钮事件
+    document.getElementById('export-json').onclick = function() {
+      const jsonData = abstractResults.map(result => {
+        // 创建干净的JSON对象，去除错误信息和状态信息
+        return {
+          title: result.title,
+          journal: result.journal || null,
+          year: result.year || null,
+          authors: result.authors || null,
+          doi: result.doi || null,
+          pmid: result.pmid || null,
+          abstract: result.abstract || null
+        };
+      });
+
+      // 创建JSON文件并下载
+      const jsonString = JSON.stringify(jsonData, null, 2); // 美化格式化
+      downloadFile(jsonString, 'paper_abstracts.json', 'application/json');
+    };
+
+    // 导出为CSV按钮事件
+    document.getElementById('export-csv').onclick = function() {
+      // CSV头
+      let csvContent = '\uFEFF"Title","Journal","Year","Authors","DOI","PMID","Abstract"\n';
+
+      // 添加每一行数据
+      abstractResults.forEach(result => {
+        // 处理CSV字段，确保引号和逗号正确处理
+        const escapeCsvField = (field) => {
+          if (field === null || field === undefined) return '';
+          // 将字段中的双引号替换为两个双引号，并用双引号包裹整个字段
+          return `"${String(field).replace(/"/g, '""')}"`;
+        };
+
+        const row = [
+          escapeCsvField(result.title),
+          escapeCsvField(result.journal),
+          escapeCsvField(result.year),
+          escapeCsvField(result.authors),
+          escapeCsvField(result.doi),
+          escapeCsvField(result.pmid),
+          escapeCsvField(result.abstract)
+        ].join(',');
+
+        csvContent += row + '\n';
+      });
+
+      // 创建CSV文件并下载
+      downloadFile(csvContent, 'paper_abstracts.csv', 'text/csv;charset=utf-8');
+    };
+
+    // 通用的文件下载函数
+    function downloadFile(content, fileName, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      // 显示下载成功提示
+      alert(`文件 ${fileName} 已成功下载！`);
+    }
 
     // 重试失败项按钮事件
     if (failed > 0) {
