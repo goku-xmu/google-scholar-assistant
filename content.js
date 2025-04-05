@@ -4,105 +4,6 @@ let maxPages = 10; // 默认值为10
 // 存储CSV数据的映射
 const zkyfqMap = {};
 const jcrfqMap = {};
-const ccfMap = {}; // 新增CCF分级信息存储
-
-// CCF分级匹配辅助映射 - 增加更广泛的匹配能力
-const ccfAbbreviationMap = {};
-const ccfCommonNames = {};
-
-// 直接定义CCF分级数据 - 防止文件加载失败
-const CCF_RANKINGS = [
-  // A类期刊
-  { rank: "A", abbr: "TOCS", name: "ACM Transactions on Computer Systems" },
-  { rank: "A", abbr: "TOS", name: "ACM Transactions on Storage" },
-  { rank: "A", abbr: "TCAD", name: "IEEE Transactions On Computer-Aided Design Of Integrated Circuits And System" },
-  { rank: "A", abbr: "TC", name: "IEEE Transactions on Computers" },
-  { rank: "A", abbr: "TPDS", name: "IEEE Transactions on Parallel and Distributed Systems" },
-  { rank: "A", abbr: "TACO", name: "ACM Transactions on Architecture and Code Optimization" },
-  { rank: "A", abbr: "JSAC", name: "IEEE Journal of Selected Areas in Communications" },
-  { rank: "A", abbr: "TMC", name: "IEEE Transactions on Mobile Computing" },
-  { rank: "A", abbr: "TON", name: "IEEE/ACM Transactions on Networking" },
-  { rank: "A", abbr: "TDSC", name: "IEEE Transactions on Dependable and Secure Computing" },
-  { rank: "A", abbr: "TIFS", name: "IEEE Transactions on Information Forensics and Security" },
-  { rank: "A", abbr: "JOC", name: "Journal of Cryptology" },
-  { rank: "A", abbr: "TOPLAS", name: "ACM Transactions on Programming Languages & Systems" },
-  { rank: "A", abbr: "TOSEM", name: "ACM Transactions on Software Engineering and Methodology" },
-  { rank: "A", abbr: "TSE", name: "IEEE Transactions on Software Engineering" },
-  { rank: "A", abbr: "TSC", name: "IEEE Transactions on Service Computing" },
-  { rank: "A", abbr: "TODS", name: "ACM Transactions on Database Systems" },
-  { rank: "A", abbr: "TOIS", name: "ACM Transactions on Information Systems" },
-  { rank: "A", abbr: "TKDE", name: "IEEE Transactions on Knowledge and Data Engineering" },
-  { rank: "A", abbr: "VLDBJ", name: "VLDB Journal" },
-  { rank: "A", abbr: "JACM", name: "Journal of the ACM" },
-  { rank: "A", abbr: "AI", name: "Artificial Intelligence" },
-  { rank: "A", abbr: "TPAMI", name: "IEEE Trans on Pattern Analysis and Machine Intelligence" },
-  { rank: "A", abbr: "IJCV", name: "International Journal of Computer Vision" },
-  { rank: "A", abbr: "JMLR", name: "Journal of Machine Learning Research" },
-  { rank: "A", abbr: "TVCG", name: "IEEE Transactions on Visualization and Computer Graphics" },
-
-  // A类会议
-  { rank: "A", abbr: "SIGCOMM", name: "ACM International Conference on Applications, Technologies, Architectures, and Protocols for Computer Communication" },
-  { rank: "A", abbr: "MobiCom", name: "ACM International Conference on Mobile Computing and Networking" },
-  { rank: "A", abbr: "INFOCOM", name: "IEEE International Conference on Computer Communications" },
-  { rank: "A", abbr: "NSDI", name: "Symposium on Network System Design and Implementation" },
-  { rank: "A", abbr: "CCS", name: "ACM Conference on Computer and Communications Security" },
-  { rank: "A", abbr: "EUROCRYPT", name: "European Cryptology Conference" },
-  { rank: "A", abbr: "S&P", name: "IEEE Symposium on Security and Privacy" },
-  { rank: "A", abbr: "CRYPTO", name: "International Cryptology Conference" },
-  { rank: "A", abbr: "SOSP", name: "ACM Symposium on Operating Systems Principles" },
-  { rank: "A", abbr: "OSDI", name: "USENIX Symposium on Operating Systems Design and Implementation" },
-  { rank: "A", abbr: "SIGMOD", name: "ACM Conference on Management of Data" },
-  { rank: "A", abbr: "SIGKDD", name: "ACM Knowledge Discovery and Data Mining" },
-  { rank: "A", abbr: "ICDE", name: "IEEE International Conference on Data Engineering" },
-  { rank: "A", abbr: "SIGIR", name: "International Conference on Research on Development in Information Retrieval" },
-  { rank: "A", abbr: "VLDB", name: "International Conference on Very Large Data Bases" },
-  { rank: "A", abbr: "AAAI", name: "AAAI Conference on Artificial Intelligence" },
-  { rank: "A", abbr: "CVPR", name: "IEEE Conference on Computer Vision and Pattern Recognition" },
-  { rank: "A", abbr: "ICCV", name: "International Conference on Computer Vision" },
-  { rank: "A", abbr: "ICML", name: "International Conference on Machine Learning" },
-  { rank: "A", abbr: "NIPS/NeurIPS", name: "Annual Conference on Neural Information Processing Systems" },
-  { rank: "A", abbr: "ACL", name: "Annual Meeting of the Association for Computational Linguistics" },
-  { rank: "A", abbr: "PLDI", name: "ACM SIGPLAN Symposium on Programming Language Design & Implementation" },
-  { rank: "A", abbr: "POPL", name: "ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages" },
-  { rank: "A", abbr: "PPoPP", name: "ACM SIGPLAN Symposium on Principles & Practice of Parallel Programming" },
-  { rank: "A", abbr: "FAST", name: "Conference on File and Storage Technologies" },
-  { rank: "A", abbr: "DAC", name: "Design Automation Conference" },
-  { rank: "A", abbr: "HPCA", name: "High-Performance Computer Architecture" },
-  { rank: "A", abbr: "MICRO", name: "IEEE/ACM International Symposium on Microarchitecture" },
-  { rank: "A", abbr: "SC", name: "International Conference for High Performance Computing, Networking, Storage, and Analysis" },
-  { rank: "A", abbr: "ASPLOS", name: "International Conference on Architectural Support for Programming Languages and Operating Systems" },
-  { rank: "A", abbr: "ISCA", name: "International Symposium on Computer Architecture" },
-  { rank: "A", abbr: "USENIX ATC", name: "USENIX Annual Technical Conference" },
-  { rank: "A", abbr: "EuroSys", name: "European Conference on Computer Systems" },
-  { rank: "A", abbr: "NDSS", name: "ISOC Network and Distributed System Security Symposium" },
-  { rank: "A", abbr: "USENIX Security", name: "Usenix Security Symposium" },
-
-  // B类期刊 (仅列举部分)
-  { rank: "B", abbr: "TOIT", name: "ACM Transactions on Internet Technology" },
-  { rank: "B", abbr: "TOMCCAP", name: "ACM Transactions on Multimedia Computing, Communications and Applications" },
-  { rank: "B", abbr: "TOSN", name: "ACM Transactions on Sensor Networks" },
-  { rank: "B", abbr: "CN", name: "Computer Networks" },
-  { rank: "B", abbr: "TCOM", name: "IEEE Transactions on Communications" },
-  { rank: "B", abbr: "TWC", name: "IEEE Transactions on Wireless Communications" },
-  { rank: "B", abbr: "TOPS", name: "ACM Transactions on Privacy and Security" },
-  { rank: "B", abbr: "COMPSEC", name: "Computers & Security" },
-  { rank: "B", abbr: "DCC", name: "Designs, Codes and Cryptography" },
-  { rank: "B", abbr: "JCS", name: "Journal of Computer Security" },
-  { rank: "B", abbr: "TAAS", name: "ACM Transactions on Autonomous and Adaptive Systems" },
-  { rank: "B", abbr: "TODAES", name: "ACM Transactions on Design Automation of Electronic Systems" },
-  { rank: "B", abbr: "TECS", name: "ACM Transactions on Embedded Computing Systems" },
-  { rank: "B", abbr: "TRETS", name: "ACM Transactions on Reconfigurable Technology and Systems" },
-  { rank: "B", abbr: "TVLSI", name: "IEEE Transactions on Very Large Scale Integration (VLSI) Systems" },
-
-  // C类期刊 (仅列举部分)
-  { rank: "C", abbr: "JETC", name: "ACM Journal on Emerging Technologies in Computing Systems" },
-  { rank: "C", abbr: "CONCURRENCY", name: "Concurrency and Computation: Practice and Experience" },
-  { rank: "C", abbr: "DC", name: "Distributed Computing" },
-  { rank: "C", abbr: "FGCS", name: "Future Generation Computer Systems" },
-  { rank: "C", abbr: "TCC", name: "IEEE Transactions on Cloud Computing" },
-  { rank: "C", abbr: "CLSR", name: "Computer Law and Security Review" },
-  { rank: "C", abbr: "EJISEC", name: "EURASIP Journal on Information Security" }
-];
 
 // 加载CSV文件并解析
 async function loadCSVData() {
@@ -117,75 +18,11 @@ async function loadCSVData() {
     const jcrfqText = await jcrfqResponse.text();
     parseJcrfqCSV(jcrfqText);
 
-    // 加载CCF分级数据 (两种方式同时尝试)
-    try {
-      // 方式1: 从内置数据直接加载
-      console.log('开始从内置数据加载CCF分级数据...');
-      processBuiltInCCFData();
-
-      // 方式2: 尝试从dataGen.js加载
-      console.log('开始从dataGen.js加载CCF分级数据...');
-      const ccfResponse = await fetch(chrome.runtime.getURL('/data/dataGen.js'));
-      if (ccfResponse.ok) {
-        const ccfText = await ccfResponse.text();
-        console.log(`获取到dataGen.js, 内容长度: ${ccfText.length}字节`);
-        parseCCFData(ccfText);
-      } else {
-        console.warn(`dataGen.js加载失败: ${ccfResponse.status} ${ccfResponse.statusText}，使用内置数据`);
-      }
-    } catch (ccfError) {
-      console.error('从外部加载CCF分级数据时出错:', ccfError);
-      console.log('使用内置的CCF数据作为备份');
-    }
-
     console.log('CSV数据加载完成');
-    console.log(`期刊数据统计: 中科院分区=${Object.keys(zkyfqMap).length}, JCR分区=${Object.keys(jcrfqMap).length}, CCF分级=${Object.keys(ccfMap).length}`);
+    console.log(`期刊数据统计: 中科院分区=${Object.keys(zkyfqMap).length}, JCR分区=${Object.keys(jcrfqMap).length}`);
   } catch (error) {
     console.error('加载CSV文件时出错:', error);
   }
-}
-
-// 处理内置的CCF数据
-function processBuiltInCCFData() {
-  console.log(`处理内置CCF数据，共 ${CCF_RANKINGS.length} 条记录`);
-  let validEntries = 0;
-
-  for (const item of CCF_RANKINGS) {
-    const rank = item.rank;
-    const abbr = item.abbr;
-    const fullName = item.name;
-
-    // 处理期刊全名
-    const processedFullName = processJournalName(fullName);
-
-    if (processedFullName) {
-      // 存储CCF分级信息 - 主索引
-      ccfMap[processedFullName] = { rank, originalName: fullName };
-      validEntries++;
-
-      // 创建多种变体来增加匹配概率
-      const nameParts = fullName.split(/[\s:,\-()]+/).filter(p => p.length > 2);
-      for (const part of nameParts) {
-        const processedPart = processJournalName(part);
-        if (processedPart && processedPart.length > 3 && processedPart !== processedFullName) {
-          ccfCommonNames[processedPart] = processedFullName;
-        }
-      }
-    }
-
-    // 如果有缩写，也存储一份
-    if (abbr) {
-      const processedAbbr = processJournalName(abbr);
-      if (processedAbbr) {
-        ccfMap[processedAbbr] = { rank, originalName: fullName, isAbbr: true };
-        ccfAbbreviationMap[processedAbbr] = processedFullName;
-        validEntries++;
-      }
-    }
-  }
-
-  console.log(`内置CCF数据处理完成，共 ${validEntries} 条有效记录`);
-  console.log(`建立了 ${Object.keys(ccfAbbreviationMap).length} 个缩写映射和 ${Object.keys(ccfCommonNames).length} 个部分名称映射`);
 }
 
 // 解析zkyfq.csv
@@ -249,77 +86,6 @@ function parseCSVLine(line) {
   return result;
 }
 
-// 解析CCF分级数据
-function parseCCFData(dataText) {
-  try {
-    // 从dataGen.js提取CCF分级列表
-    const ccfRankListMatch = dataText.match(/const ccfRankList\s*=\s*([^;]+);/);
-    if (!ccfRankListMatch) {
-      console.error('无法在dataGen.js中找到ccfRankList');
-      return;
-    }
-
-    const ccfRankListStr = ccfRankListMatch[1]
-      .replace(/\s*\+\s*/g, '')  // 移除字符串连接符
-      .replace(/"/g, '')         // 移除引号
-      .trim();
-
-    const lines = ccfRankListStr.split('\\n');
-    console.log(`CCF数据包含 ${lines.length} 行记录`);
-
-    let validEntries = 0;
-    let skippedEntries = 0;
-
-    for (const line of lines) {
-      if (!line.trim()) continue;
-
-      const parts = line.split('\t');
-      if (parts.length < 3) {
-        skippedEntries++;
-        continue;
-      }
-
-      const rank = parts[0].trim();  // A, B 或 C
-      const abbr = parts[1].trim();  // 缩写
-      const fullName = parts[2].trim();  // 完整名称
-
-      // 处理期刊全名，用于匹配
-      const processedFullName = processJournalName(fullName);
-
-      if (processedFullName) {
-        // 存储CCF分级信息 - 主索引
-        ccfMap[processedFullName] = { rank, originalName: fullName };
-        validEntries++;
-
-        // 创建多种变体来增加匹配概率
-        const nameParts = fullName.split(/[\s:,\-()]+/).filter(p => p.length > 2);
-        for (const part of nameParts) {
-          const processedPart = processJournalName(part);
-          if (processedPart && processedPart.length > 3 && processedPart !== processedFullName) {
-            ccfCommonNames[processedPart] = processedFullName;
-          }
-        }
-      }
-
-      // 如果有缩写，也存储一份
-      if (abbr) {
-        const processedAbbr = processJournalName(abbr);
-        if (processedAbbr) {
-          ccfMap[processedAbbr] = { rank, originalName: fullName, isAbbr: true };
-          ccfAbbreviationMap[processedAbbr] = processedFullName;
-          validEntries++;
-        }
-      }
-    }
-
-    console.log(`CCF分级数据加载完成，共 ${validEntries} 条有效记录，${skippedEntries} 条无效记录`);
-    console.log(`建立了 ${Object.keys(ccfAbbreviationMap).length} 个缩写映射和 ${Object.keys(ccfCommonNames).length} 个部分名称映射`);
-  } catch (error) {
-    console.error('解析CCF分级数据时出错:', error);
-    console.error('错误堆栈:', error.stack);
-  }
-}
-
 // 提取标题、期刊信息和索引
 function extractTitlesAndJournals() {
   const papers = [];
@@ -342,7 +108,6 @@ function extractTitlesAndJournals() {
       // 获取额外信息
       const zkyInfo = zkyfqMap[processedJournal] || { 大类分区: '未知', Top: '否' };
       const jcrInfo = jcrfqMap[processedJournal] || { IF_2023: '未知', IF_Quartile: '未知' };
-      const ccfInfo = getCCFRank(processedJournal); // 使用增强版的CCF等级获取函数
 
       papers.push({
         title,
@@ -355,8 +120,7 @@ function extractTitlesAndJournals() {
         大类分区: zkyInfo.大类分区,
         Top: zkyInfo.Top,
         IF_2023: jcrInfo.IF_2023,
-        IF_Quartile: jcrInfo.IF_Quartile,
-        CCF等级: ccfInfo.rank // CCF分级信息
+        IF_Quartile: jcrInfo.IF_Quartile
       }); // 加入摘要和处理后的期称及额外信息
     }
   });
@@ -396,13 +160,6 @@ function sleep(ms) {
 // 获取期刊信息
 async function fetchJournalInfo(papers) {
   const processedPapers = [];
-  const matchStatistics = {
-    total: 0,
-    directMatches: 0,
-    partialMatches: 0,
-    abbrMatches: 0,
-    noMatches: 0
-  };
 
   // 显示"正在匹配期刊信息，请稍等..."提示
   showMatchingStatus('正在匹配期刊信息，请稍等...', true);
@@ -445,33 +202,10 @@ async function fetchJournalInfo(papers) {
       journal = journal.toUpperCase();
 
       const processedJournal = processJournalName(journal);
-      matchStatistics.total++;
-
-      // 先检查ccfMap中是否直接存在
-      if (ccfMap[processedJournal]) {
-        matchStatistics.directMatches++;
-      } else if (ccfCommonNames[processedJournal]) {
-        matchStatistics.partialMatches++;
-      } else if (processedJournal.length <= 8) {
-        // 检查是否是缩写匹配
-        let found = false;
-        for (const abbr in ccfAbbreviationMap) {
-          if ((abbr.includes(processedJournal) || processedJournal.includes(abbr)) &&
-              Math.abs(abbr.length - processedJournal.length) <= 2) {
-            matchStatistics.abbrMatches++;
-            found = true;
-            break;
-          }
-        }
-        if (!found) matchStatistics.noMatches++;
-      } else {
-        matchStatistics.noMatches++;
-      }
 
       // 获取额外信息
       const zkyInfo = zkyfqMap[processedJournal] || { 大类分区: '未知', Top: '否' };
       const jcrInfo = jcrfqMap[processedJournal] || { IF_2023: '未知', IF_Quartile: '未知' };
-      const ccfInfo = getCCFRank(processedJournal); // 使用增强版的CCF等级获取函数
 
       return {
         ...paper,
@@ -480,8 +214,7 @@ async function fetchJournalInfo(papers) {
         大类分区: zkyInfo.大类分区,
         Top: zkyInfo.Top,
         IF_2023: jcrInfo.IF_2023,
-        IF_Quartile: jcrInfo.IF_Quartile,
-        CCF等级: ccfInfo.rank // CCF分级信息
+        IF_Quartile: jcrInfo.IF_Quartile
       };
     });
 
@@ -491,14 +224,6 @@ async function fetchJournalInfo(papers) {
     // 每处理完一批次，暂停200毫秒
     await sleep(100);
   }
-
-  // 打印匹配统计信息
-  console.log('CCF匹配统计:', matchStatistics);
-  console.log(`CCF匹配率: ${((matchStatistics.total - matchStatistics.noMatches) / matchStatistics.total * 100).toFixed(2)}%`);
-  console.log(`- 直接匹配: ${matchStatistics.directMatches} (${(matchStatistics.directMatches / matchStatistics.total * 100).toFixed(2)}%)`);
-  console.log(`- 部分匹配: ${matchStatistics.partialMatches} (${(matchStatistics.partialMatches / matchStatistics.total * 100).toFixed(2)}%)`);
-  console.log(`- 缩写匹配: ${matchStatistics.abbrMatches} (${(matchStatistics.abbrMatches / matchStatistics.total * 100).toFixed(2)}%)`);
-  console.log(`- 未匹配: ${matchStatistics.noMatches} (${(matchStatistics.noMatches / matchStatistics.total * 100).toFixed(2)}%)`);
 
   // 隐藏"正在匹配期刊信息，请稍等..."提示，显示"匹配完成"提示
   showMatchingStatus('匹配完成', false);
@@ -549,10 +274,6 @@ function displayTitlesWithJournals(papers) {
       } else {
         displayInfo += ` | 中科院${paper.大类分区}区`;
       }
-      // 添加CCF分级信息
-      if (paper.CCF等级 && paper.CCF等级 !== '未知') {
-        displayInfo += ` | CCF ${paper.CCF等级}`;
-      }
       processedJournalNameMap[paper.processedJournal] = `${paper.journal} | ${displayInfo}`;
     }
   });
@@ -569,19 +290,40 @@ function displayTitlesWithJournals(papers) {
 
   // 修改筛选框的HTML结构
   const filterSortHtml = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <h3 style="margin: 0;">提取的论文信息 (共 ${papers.length} 篇)</h3>
+      <button id="close-window" class="action-button" style="
+        background-color: #d3baf8;
+        color: black;
+        border: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.3s;
+      ">×</button>
+    </div>
     <div class="filter-sort-container" style="
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 15px;
-      gap: 20px;
+      margin-bottom: 10px;
+      gap: 15px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
     ">
-      <div style="width: 73%;">
+      <div style="width: 70%;">
         <label for="journal-filter" style="
           display: block;
           margin-bottom: 8px;
+          font-size: 14px;
           font-weight: 500;
           color: #333;
+          height: 14px; /* 固定高度与右侧标题一致 */
+          line-height: 14px;
         ">筛选期刊：</label>
         <div id="journal-filter" style="
           width: 100%;
@@ -589,131 +331,260 @@ function displayTitlesWithJournals(papers) {
           overflow-y: auto;
           border: 1px solid #e0e0e0;
           border-radius: 8px;
-          padding: 12px;
+          padding: 10px;
           background: #f8f9fa;
+          box-sizing: border-box;
         ">
-          <label><input type="checkbox" value="all" checked> <span class="journal-option">全部</span></label>
+          <label style="display: flex; align-items: center; padding: 3px 0;">
+            <input type="checkbox" value="all" checked style="
+              margin-right: 5px;
+              width: 16px;
+              height: 16px;
+            ">
+            <span class="journal-option" style="font-size: 14px;">全部</span>
+          </label>
           ${uniqueJournals.map(journal => {
             const journalInfo = papers.find(p => p.processedJournal === journal);
             return `
-              <label title="${processedJournalNameMap[journal]}">
-                <input type="checkbox" value="${journal}">
-                <span class="journal-option">
+              <label title="${processedJournalNameMap[journal]}" style="display: flex; align-items: center; padding: 3px 0;">
+                <input type="checkbox" value="${journal}" style="
+                  margin-right: 5px;
+                  width: 16px;
+                  height: 16px;
+                ">
+                <span class="journal-option" style="font-size: 14px;">
                   ${journalInfo.journal}
                   <span class="info-tag if-tag">IF: ${jcrfqMap[journal]?.IF_2023 || '未知'}</span>
                   <span class="info-tag jcr-tag">JCR: ${jcrfqMap[journal]?.IF_Quartile || '未知'}</span>
                   <span class="info-tag cas-tag">中科院${zkyfqMap[journal]?.大类分区 || '未知'}区${zkyfqMap[journal]?.Top === '是' ? 'TOP' : ''}</span>
-                  ${ccfMap[journal]?.rank && ccfMap[journal]?.rank !== '未知' ?
-                    `<span class="info-tag ccf-tag">CCF ${ccfMap[journal].rank}</span>` : ''}
-                  <span style="margin-left: 5px;">(${journalCountMap[journal]})</span>
+                  <span style="margin-left: 5px; color: #666; font-size: 14px;">(${journalCountMap[journal]})</span>
                 </span>
               </label>
             `;
           }).join('')}
         </div>
       </div>
-      <div style="width: 23%;">
+      <div style="width: 27%;">
         <div style="
-          background: #f8f9fa;
-          padding: 15px;
-          border-radius: 8px;
-          border: 1px solid #e0e0e0;
+          display: flex;
+          flex-direction: column;
+          margin-bottom: 8px;
+          height: 14px; /* 标题高度与左侧保持一致 */
+          line-height: 14px;
         ">
-          <label for="sort-options" style="
-            display: block;
-            margin-bottom: 8px;
+          <label style="
+            font-size: 14px;
             font-weight: 500;
             color: #333;
-          ">排序：</label>
-          <select id="sort-options" style="
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            margin-bottom: 12px;
-            background: white;
-          ">
-            <option value="alphabet-asc">A-Z</option>
-            <option value="alphabet-desc">Z-A</option>
-            <option value="count-desc">数量降序</option>
-            <option value="count-asc">数量升序</option>
-            <option value="if-desc">IF降序</option>
-            <option value="if-asc">IF升序</option>
-            <option value="ccf-rank">CCF等级</option>
-          </select>
-          <div style="margin-top: 10px;">
-            <label>最小IF值：</label>
-            <div>
-              <input type="number" id="if-min" placeholder="最小值" style="width: 100%;">
-            </div>
-          </div>
-          <div style="margin-top: 10px;">
-            <label>JCR分区：</label>
-            <div>
-              <label><input type="checkbox" name="jcr-filter" value="Q1"> Q1</label>
-              <label><input type="checkbox" name="jcr-filter" value="Q2"> Q2</label>
-              <label><input type="checkbox" name="jcr-filter" value="Q3"> Q3</label>
-              <label><input type="checkbox" name="jcr-filter" value="Q4"> Q4</label>
-            </div>
-          </div>
-          <div style="margin-top: 10px;">
-            <label>中科院分区：</label>
-            <div>
-              <label><input type="checkbox" name="cas-filter" value="1"> 1区</label>
-              <label><input type="checkbox" name="cas-filter" value="2"> 2区</label>
-              <label><input type="checkbox" name="cas-filter" value="3"> 3区</label>
-              <label><input type="checkbox" name="cas-filter" value="4"> 4区</label>
-            </div>
-          </div>
-          <div style="margin-top: 10px;">
-            <label>CCF等级：</label>
-            <div>
-              <label><input type="checkbox" name="ccf-filter" value="A"> A类</label>
-              <label><input type="checkbox" name="ccf-filter" value="B"> B类</label>
-              <label><input type="checkbox" name="ccf-filter" value="C"> C类</label>
-            </div>
-          </div>
-          <div style="margin-top: 10px;">
-            <label><input type="checkbox" id="top-filter"> TOP期刊</label>
-          </div>
+          ">筛选选项：</label>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-          <button id="clear-filters" style="width: 48%;">清除筛选</button>
-          <button id="close-window" style="width: 48%;">关闭窗口</button>
+        <div style="
+          background: #f8f9fa;
+          padding: 10px;
+          border-radius: 8px;
+          border: 1px solid #e0e0e0;
+          box-sizing: border-box;
+          height: 250px;
+          overflow-y: auto;
+        ">
+          <div style="
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 10px;
+          ">
+            <label for="sort-options" style="
+              font-size: 14px;
+              font-weight: 500;
+              color: #333;
+              white-space: nowrap;
+            ">排序方式：</label>
+            <select id="sort-options" style="
+              flex: 1;
+              padding: 6px 10px;
+              border: 1px solid #e0e0e0;
+              border-radius: 6px;
+              background: white;
+              font-size: 14px;
+              color: #333;
+              cursor: pointer;
+              height: 32px;
+              box-sizing: border-box;
+            ">
+              <option value="alphabet-asc">A-Z</option>
+              <option value="alphabet-desc">Z-A</option>
+              <option value="count-desc">数量降序</option>
+              <option value="count-asc">数量升序</option>
+              <option value="if-desc">IF降序</option>
+              <option value="if-asc">IF升序</option>
+            </select>
+          </div>
+
+          <div style="
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 10px;
+          ">
+            <label for="if-min" style="
+              font-size: 14px;
+              font-weight: 500;
+              color: #333;
+              white-space: nowrap;
+            ">最小IF值：</label>
+            <input type="number" id="if-min" placeholder="最小值" style="
+              flex: 1;
+              padding: 6px 10px;
+              border: 1px solid #e0e0e0;
+              border-radius: 6px;
+              font-size: 14px;
+              color: #333;
+              height: 32px;
+              box-sizing: border-box;
+            ">
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <label style="
+              display: block;
+              margin-bottom: 5px;
+              font-size: 14px;
+              font-weight: 500;
+              color: #333;
+            ">JCR分区：</label>
+            <div style="
+              display: flex;
+              flex-wrap: nowrap;
+              gap: 5px;
+              justify-content: space-between;
+            ">
+              <label style="display: flex; align-items: center; flex: 1;">
+                <input type="checkbox" name="jcr-filter" value="Q1" style="margin-right: 3px;">
+                <span style="font-size: 14px;">Q1</span>
+              </label>
+              <label style="display: flex; align-items: center; flex: 1;">
+                <input type="checkbox" name="jcr-filter" value="Q2" style="margin-right: 3px;">
+                <span style="font-size: 14px;">Q2</span>
+              </label>
+              <label style="display: flex; align-items: center; flex: 1;">
+                <input type="checkbox" name="jcr-filter" value="Q3" style="margin-right: 3px;">
+                <span style="font-size: 14px;">Q3</span>
+              </label>
+              <label style="display: flex; align-items: center; flex: 1;">
+                <input type="checkbox" name="jcr-filter" value="Q4" style="margin-right: 3px;">
+                <span style="font-size: 14px;">Q4</span>
+              </label>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <label style="
+              display: block;
+              margin-bottom: 5px;
+              font-size: 14px;
+              font-weight: 500;
+              color: #333;
+            ">中科院分区：</label>
+            <div style="
+              display: flex;
+              flex-wrap: nowrap;
+              gap: 5px;
+              justify-content: space-between;
+            ">
+              <label style="display: flex; align-items: center; flex: 1;">
+                <input type="checkbox" name="cas-filter" value="1" style="margin-right: 3px;">
+                <span style="font-size: 14px;">1区</span>
+              </label>
+              <label style="display: flex; align-items: center; flex: 1;">
+                <input type="checkbox" name="cas-filter" value="2" style="margin-right: 3px;">
+                <span style="font-size: 14px;">2区</span>
+              </label>
+              <label style="display: flex; align-items: center; flex: 1;">
+                <input type="checkbox" name="cas-filter" value="3" style="margin-right: 3px;">
+                <span style="font-size: 14px;">3区</span>
+              </label>
+              <label style="display: flex; align-items: center; flex: 1;">
+                <input type="checkbox" name="cas-filter" value="4" style="margin-right: 3px;">
+                <span style="font-size: 14px;">4区</span>
+              </label>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <label style="display: flex; align-items: center;">
+              <input type="checkbox" id="top-filter" style="margin-right: 5px;">
+              <span style="font-size: 14px; font-weight: 500; color: #333;">TOP期刊</span>
+            </label>
+            <button id="clear-filters" class="action-button" style="
+              background-color: #e0e0e0;
+              color: black;
+              border: none;
+              padding: 4px 10px;
+              border-radius: 6px;
+              cursor: pointer;
+              font-size: 14px;
+              height: 28px;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              transition: background-color 0.3s;
+            ">清除筛选</button>
+          </div>
         </div>
       </div>
     </div>
   `;
 
-  // 修改显示论文信息的HTML，添加全选功能
+  // 移除旧的按钮容器，直接插入新的HTML
   resultsDiv.innerHTML = `
-    <h3>提取的论文信息 (共 ${papers.length} 篇)</h3>
     ${filterSortHtml}
     <div style="
-      margin: 5px 0;
-      text-align: right;
-      padding-top: 5px;
-      border-top: 1px solid #e0e0e0;
+      margin: 3px 0;
+      padding: 8px 0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      align-items: center;
     ">
-      <button id="get-abstracts" style="
-        background-color: #d3baf8;
-        color: black;
-        border: none;
-        padding: 8px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        margin-right: 10px;
-      ">获取论文摘要</button>
-      <button id="cite-selected" style="
-        background-color: #d3baf8;
-        color: black;
-        border: none;
-        padding: 8px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-      ">引用所选论文</button>
+      <div style="
+        display: flex;
+        gap: 10px;
+        width: 100%;
+        justify-content: flex-end;
+      ">
+        <button id="get-abstracts" class="action-button" style="
+          flex: 1;
+          max-width: 130px;
+          background-color: #d3baf8;
+          color: black;
+          border: none;
+          padding: 5px 12px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 14px;
+          height: 30px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          transition: background-color 0.3s;
+        ">获取论文摘要</button>
+        <button id="cite-selected" class="action-button" style="
+          flex: 1;
+          max-width: 130px;
+          background-color: #d3baf8;
+          color: black;
+          border: none;
+          padding: 5px 12px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 14px;
+          height: 30px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          transition: background-color 0.3s;
+        ">引用所选论文</button>
+      </div>
     </div>
     <div style="padding: 10px; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 10px;">
       <label style="display: flex; align-items: center; cursor: pointer;">
@@ -738,7 +609,7 @@ function displayTitlesWithJournals(papers) {
             ">
             <div style="flex: 1; padding-right: 60px;">
               <div class="paper-header">
-                <strong><a href="${paper.link}" target="_blank" style="text-decoration: none; color: inherit;">${paper.title}</a></strong>
+                <strong><a href="${paper.link}" target="_blank" style="text-decoration: none; color: inherit;" class="paper-title-link">${paper.title}</a></strong>
               </div>
               <small style="color: #777;">
                 <strong>期刊<span class="journal-name">${paper.journal}</span>
@@ -746,7 +617,6 @@ function displayTitlesWithJournals(papers) {
                   <span class="info-tag if-tag">IF: ${paper.IF_2023}</span>
                   <span class="info-tag jcr-tag">JCR: ${paper.IF_Quartile}</span>
                   <span class="info-tag cas-tag">中科院${paper.大类分区}区${paper.Top === '是' ? 'TOP' : ''}</span>
-                  ${paper.CCF等级 && paper.CCF等级 !== '未知' ? `<span class="info-tag ccf-tag">CCF ${paper.CCF等级}</span>` : ''}
                 </span></strong>
               </small>
               <br>
@@ -764,6 +634,35 @@ function displayTitlesWithJournals(papers) {
   // 添加全选功能的事件监听器
   const selectAllCheckbox = document.getElementById('select-all-papers');
   const paperCheckboxes = document.querySelectorAll('.paper-checkbox');
+
+  // 为按钮添加悬停效果
+  const addButtonHover = (buttonId) => {
+    const button = document.getElementById(buttonId);
+    if (button) {
+      button.onmouseover = function() {
+        this.style.backgroundColor = '#e1ceff';
+      };
+      button.onmouseout = function() {
+        this.style.backgroundColor = '#d3baf8';
+      };
+    }
+  };
+
+  // 为所有按钮添加悬停效果
+  addButtonHover('get-abstracts');
+  addButtonHover('cite-selected');
+  addButtonHover('close-window');
+
+  // 为清除筛选按钮添加特殊悬停效果
+  const clearFiltersBtn = document.getElementById('clear-filters');
+  if (clearFiltersBtn) {
+    clearFiltersBtn.onmouseover = function() {
+      this.style.backgroundColor = '#cccccc';
+    };
+    clearFiltersBtn.onmouseout = function() {
+      this.style.backgroundColor = '#e0e0e0';
+    };
+  }
 
   // 更新全选框状态的函数
   function updateSelectAllState() {
@@ -823,6 +722,12 @@ function displayTitlesWithJournals(papers) {
       margin-bottom: px;
       position: relative;
     }
+    .paper-title-link {
+      transition: color 0.2s ease;
+    }
+    .paper-title-link:hover {
+      color: #1a73e8 !important;
+    }
     .info-tag {
       display: inline-block;
       padding: 2px 8px;
@@ -843,10 +748,6 @@ function displayTitlesWithJournals(papers) {
       background-color: #E8F5E9;
       color: #388E3C;
     }
-    .ccf-tag {
-      background-color: #E3F2FD;
-      color: #1565C0;
-    }
     .cite-button {
       position: absolute;
       right: 15px;
@@ -855,7 +756,7 @@ function displayTitlesWithJournals(papers) {
       background-color: #d3baf8;
       color: black;
       border: none;
-      padding: 5px 15px;
+      padding: 5px 12px;
       border-radius: 4px;
       cursor: pointer;
       transition: background-color 0.3s;
@@ -864,6 +765,9 @@ function displayTitlesWithJournals(papers) {
       height: 30px;
       min-width: 50px;
       font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     .cite-button:hover {
       background-color: #e1ceff;
@@ -1002,10 +906,6 @@ function displayTitlesWithJournals(papers) {
       background-color: #E8F5E9;
       color: #388E3C;
     }
-    .ccf-tag {
-      background-color: #E3F2FD;
-      color: #1565C0;
-    }
     #journal-filter label:hover {
       background-color: #f5f5f5;
     }
@@ -1038,33 +938,34 @@ function displayTitlesWithJournals(papers) {
         const ifB = parseFloat(jcrfqMap[b]?.IF_2023) || 0;
         return ifA - ifB;
       });
-    } else if (sortValue === 'ccf-rank') {
-      // 按CCF等级排序: A > B > C > 未知
-      sortedJournals.sort((a, b) => {
-        const rankA = ccfMap[a]?.rank || 'Z'; // 未知等级用Z表示，排在最后
-        const rankB = ccfMap[b]?.rank || 'Z';
-        return rankA.localeCompare(rankB);
-      });
     }
 
     // 重新生成筛选选项
     const journalFilter = document.getElementById('journal-filter');
     journalFilter.innerHTML = `
-      <label><input type="checkbox" value="all" checked> <span class="journal-option">全部</span></label>
+      <label style="display: flex; align-items: center; padding: 3px 0;">
+        <input type="checkbox" value="all" checked style="
+          margin-right: 5px;
+          width: 16px;
+          height: 16px;
+        ">
+        <span class="journal-option" style="font-size: 14px;">全部</span>
+      </label>
       ${sortedJournals.map(journal => {
         const journalInfo = papers.find(p => p.processedJournal === journal);
-        const ccfInfo = getCCFRank(journal);
         return `
-          <label title="${processedJournalNameMap[journal]}">
-            <input type="checkbox" value="${journal}">
-            <span class="journal-option">
+          <label title="${processedJournalNameMap[journal]}" style="display: flex; align-items: center; padding: 3px 0;">
+            <input type="checkbox" value="${journal}" style="
+              margin-right: 5px;
+              width: 16px;
+              height: 16px;
+            ">
+            <span class="journal-option" style="font-size: 14px;">
               ${journalInfo.journal}
               <span class="info-tag if-tag">IF: ${jcrfqMap[journal]?.IF_2023 || '未知'}</span>
               <span class="info-tag jcr-tag">JCR: ${jcrfqMap[journal]?.IF_Quartile || '未知'}</span>
               <span class="info-tag cas-tag">中科院${zkyfqMap[journal]?.大类分区 || '未知'}区${zkyfqMap[journal]?.Top === '是' ? 'TOP' : ''}</span>
-              ${ccfInfo.rank && ccfInfo.rank !== '未知' ?
-                `<span class="info-tag ccf-tag">CCF ${ccfInfo.rank}</span>` : ''}
-              <span style="margin-left: 5px;">(${journalCountMap[journal]})</span>
+              <span style="margin-left: 5px; color: #666; font-size: 14px;">(${journalCountMap[journal]})</span>
             </span>
           </label>
         `;
@@ -1140,8 +1041,6 @@ function displayTitlesWithJournals(papers) {
       .map(cb => cb.value);
     const selectedCAS = Array.from(document.querySelectorAll('input[name="cas-filter"]:checked'))
       .map(cb => cb.value);
-    const selectedCCF = Array.from(document.querySelectorAll('input[name="ccf-filter"]:checked'))
-      .map(cb => cb.value);
     const isTopSelected = document.getElementById('top-filter').checked;
     const ifMin = parseFloat(document.getElementById('if-min').value);
 
@@ -1157,18 +1056,15 @@ function displayTitlesWithJournals(papers) {
       const journal = item.getAttribute('data-journal');
       const journalInfo = jcrfqMap[journal] || {};
       const casInfo = zkyfqMap[journal] || {};
-      // 使用getCCFRank函数获取CCF分级
-      const ccfInfo = getCCFRank(journal);
       const journalIF = parseFloat(journalInfo.IF_2023) || 0;
 
       const isJCRMatch = selectedJCR.length === 0 || selectedJCR.includes(journalInfo.IF_Quartile);
       const isCASMatch = selectedCAS.length === 0 || selectedCAS.includes(casInfo.大类分区);
-      const isCCFMatch = selectedCCF.length === 0 || selectedCCF.includes(ccfInfo.rank);
       const isTopMatch = !isTopSelected || casInfo.Top === '是';
       const isIFMatch = isNaN(ifMin) || journalIF >= ifMin;
 
       if ((selectedJournals.includes('all') || selectedJournals.includes(journal)) &&
-          isJCRMatch && isCASMatch && isCCFMatch && isTopMatch && isIFMatch) {
+          isJCRMatch && isCASMatch && isTopMatch && isIFMatch) {
         item.style.display = '';
         item.querySelector('.paper-content').style.backgroundColor = visibleIndex % 2 === 0 ? '#f9f9f9' : '#e6f7ff';
         visibleIndex++;
@@ -1206,14 +1102,12 @@ function displayTitlesWithJournals(papers) {
     const journalFilter = document.getElementById('journal-filter');
     const jcrFilters = document.querySelectorAll('input[name="jcr-filter"]');
     const casFilters = document.querySelectorAll('input[name="cas-filter"]');
-    const ccfFilters = document.querySelectorAll('input[name="ccf-filter"]');
     const topFilter = document.getElementById('top-filter');
     const ifMinInput = document.getElementById('if-min');
 
     journalFilter.addEventListener('change', filterJournals);
     jcrFilters.forEach(filter => filter.addEventListener('change', filterJournals));
     casFilters.forEach(filter => filter.addEventListener('change', filterJournals));
-    ccfFilters.forEach(filter => filter.addEventListener('change', filterJournals));
     topFilter.addEventListener('change', filterJournals);
     ifMinInput.addEventListener('input', filterJournals);
   }
@@ -1225,7 +1119,7 @@ function displayTitlesWithJournals(papers) {
   document.getElementById('cite-selected').addEventListener('click', async function() {
     const selectedCheckboxes = document.querySelectorAll('.paper-checkbox:checked');
     if (selectedCheckboxes.length === 0) {
-      alert('请至少选择一篇论文');
+      showToast('请至少选择一篇论文', true);
       return;
     }
 
@@ -1286,7 +1180,7 @@ function displayTitlesWithJournals(papers) {
   document.getElementById('get-abstracts').addEventListener('click', async function() {
     const selectedCheckboxes = document.querySelectorAll('.paper-checkbox:checked');
     if (selectedCheckboxes.length === 0) {
-      alert('请至少选择一篇论文');
+      showToast('请至少选择一篇论文', true);
       return;
     }
 
@@ -1305,10 +1199,10 @@ function displayTitlesWithJournals(papers) {
 
   // 新增获取批量摘要的函数
   async function getBatchAbstracts(titles) {
-    const batchSize = 5; // 每批处理5篇文章
-    const retryAttempts = 3; // 最大重试次数
-    const retryDelay = 1000; // 重试延迟1秒
-    const batchDelay = 2000; // 每批之间延迟2秒
+    const batchSize = 3; // 修改为3篇文章一批，确保即使少量论文也会进行批处理
+    const retryAttempts = 5; // 增加最大重试次数
+    const retryDelay = 1500; // 增加重试延迟
+    const batchDelay = 2500; // 增加批次间延迟
 
     // 更新加载提示
     const loadingDiv = document.querySelector('.loading-content');
@@ -1325,16 +1219,33 @@ function displayTitlesWithJournals(papers) {
     // 添加延迟函数
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-    // 添加重试机制的请求函数
+    // 添加增强版重试机制的请求函数
     async function retryFetch(url, attempts = retryAttempts) {
       for (let i = 0; i < attempts; i++) {
         try {
+          // 添加随机延迟，避免同时发送过多请求
+          const randomDelay = Math.floor(Math.random() * 500) + 200;
+          await delay(randomDelay);
+
+          console.log(`尝试第 ${i+1}/${attempts} 次请求: ${url}`);
           const response = await fetch(url);
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+          if (!response.ok) {
+            console.warn(`请求失败，状态码: ${response.status}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          // 成功获取响应
+          console.log(`请求成功: ${url}`);
           return response;
         } catch (error) {
+          console.error(`请求失败 (尝试 ${i+1}/${attempts}): ${error.message}`);
           if (i === attempts - 1) throw error;
-          await delay(retryDelay);
+
+          // 使用指数退避策略，每次重试等待时间增加
+          const exponentialDelay = retryDelay * Math.pow(1.5, i);
+          console.log(`等待 ${exponentialDelay}ms 后重试...`);
+          await delay(exponentialDelay);
         }
       }
     }
@@ -1438,9 +1349,20 @@ function displayTitlesWithJournals(papers) {
       const batch = titles.slice(i, i + batchSize);
       updateProgress(i, titles.length, '正在获取文章信息...');
 
-      const batchResults = await Promise.all(batch.map(async (title) => {
+      // 在处理批次前添加延迟，即使是第一批
+      if (i === 0) {
+        console.log('在开始处理前添加初始化延迟...');
+        await delay(1000);
+      }
+
+      const batchResults = await Promise.all(batch.map(async (title, titleIndex) => {
+        // 每个标题处理前添加小延迟，避免同时请求
+        await delay(titleIndex * 300);
         try {
-          // 先获取DOI
+          console.log(`开始处理论文: ${title.substring(0, 50)}...`);
+          updateProgress(i + titleIndex, titles.length, `正在处理: ${title.substring(0, 50)}...`);
+
+          // 先获取DOI和PMID
           const [crossrefResult, pubmedResult] = await Promise.allSettled([
             getCrossrefData(title),
             getPubMedData(title)
@@ -1449,45 +1371,58 @@ function displayTitlesWithJournals(papers) {
           let doi = null;
           let pmid = null;
           let abstract = null;
-
-          // 从Crossref获取DOI
-          if (crossrefResult.status === 'fulfilled' && crossrefResult.value) {
-            doi = crossrefResult.value.DOI;
-          }
-
-          // 从PubMed获取PMID和摘要
-          if (pubmedResult.status === 'fulfilled' && pubmedResult.value) {
-            pmid = pubmedResult.value.PMID;
-          }
-
-          updateProgress(i, titles.length, `正在处理: ${title.substring(0, 50)}...`);
-
-          // 如果有DOI但没有PMID，尝试通过DOI获取PMID
-          if (doi && !pmid) {
-            pmid = await getPMIDWithRetry(doi);
-          }
-
-          // 如果有PMID，获取摘要和其他信息
           let journal = null;
           let year = null;
           let authors = null;
 
-          if (pmid) {
-            const articleInfo = await getAbstractWithRetry(pmid);
-            if (articleInfo) {
-              abstract = articleInfo.abstract;
-              journal = articleInfo.journal;
-              year = articleInfo.year;
-              authors = articleInfo.authors;
+          // 从Crossref获取DOI和基本信息
+          if (crossrefResult.status === 'fulfilled' && crossrefResult.value) {
+            console.log(`Crossref 返回数据: ${title.substring(0, 30)}...`);
+            doi = crossrefResult.value.DOI;
+            // 先保存Crossref的其他数据，作为备用
+            journal = crossrefResult.value.Journal?.toUpperCase();
+            year = crossrefResult.value.Year;
+            authors = crossrefResult.value.Authors;
+          } else {
+            console.log(`Crossref 未返回数据: ${title.substring(0, 30)}...`);
+          }
+
+          // 从PubMed获取PMID和摘要
+          if (pubmedResult.status === 'fulfilled' && pubmedResult.value) {
+            console.log(`PubMed 返回数据: ${title.substring(0, 30)}...`);
+            pmid = pubmedResult.value.PMID;
+            // 如果PubMed直接返回了摘要，先保存
+            if (pubmedResult.value.Abstract) {
+              abstract = pubmedResult.value.Abstract;
+              journal = pubmedResult.value.Journal || journal;
+              year = pubmedResult.value.Year || year;
+              authors = pubmedResult.value.Authors || authors;
+            }
+          } else {
+            console.log(`PubMed 未返回数据: ${title.substring(0, 30)}...`);
+          }
+
+          // 如果有DOI但没有PMID，尝试通过DOI获取PMID
+          if (doi && !pmid) {
+            console.log(`尝试通过DOI获取PMID: ${doi}`);
+            pmid = await getPMIDWithRetry(doi);
+            if (pmid) {
+              console.log(`成功通过DOI获取PMID: ${pmid}`);
             }
           }
 
-          // 如果从PubMed获取不到，尝试从Crossref获取
-          if (crossrefResult.status === 'fulfilled' && crossrefResult.value) {
-            const crossrefData = crossrefResult.value;
-            journal = (journal || crossrefData.Journal)?.toUpperCase();
-            year = year || crossrefData.Year;
-            authors = authors || crossrefData.Authors;
+          // 如果有PMID但没有摘要，使用PubMed API获取详细信息
+          if (pmid && !abstract) {
+            console.log(`尝试通过PMID获取详细信息: ${pmid}`);
+            const articleInfo = await getAbstractWithRetry(pmid);
+            if (articleInfo) {
+              console.log(`成功获取PMID详细信息: ${pmid}`);
+              abstract = articleInfo.abstract;
+              // 仅当之前没有获取到时才替换
+              journal = journal || articleInfo.journal;
+              year = year || articleInfo.year;
+              authors = authors || articleInfo.authors;
+            }
           }
 
           return {
@@ -1512,10 +1447,16 @@ function displayTitlesWithJournals(papers) {
 
       results.push(...batchResults);
 
-      // 在处理下一批之前等待
+      // 在处理下一批之前等待，无论是否还有下一批
+      // 这确保即使只有一批，也会有足够的延迟来完成所有API调用
+      const currentProgress = Math.min(i + batchSize, titles.length);
+      updateProgress(currentProgress, titles.length, '处理完成当前批次，等待系统响应...');
+      console.log(`批次 ${i/batchSize + 1} 处理完成，等待 ${batchDelay}ms...`);
+      await delay(batchDelay);
+
+      // 如果还有下一批，显示相应提示
       if (i + batchSize < titles.length) {
-        updateProgress(i + batchSize, titles.length, '等待处理下一批...');
-        await delay(batchDelay);
+        updateProgress(i + batchSize, titles.length, '准备处理下一批...');
       }
     }
 
@@ -1577,59 +1518,95 @@ function displayTitlesWithJournals(papers) {
           </div>
         </div>
         <button id="close-abstracts" style="
-          padding: 5px 15px;
+          width: 30px;
+          height: 30px;
           border: none;
           border-radius: 4px;
           background: #d3baf8;
           color: black;
           cursor: pointer;
-        ">关闭</button>
+          transition: background-color 0.3s;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+        ">×</button>
       </div>
       <div style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px;">
         <div>
           <button id="copy-all-abstracts" style="
-            padding: 5px 15px;
+            padding: 5px 12px;
             border: none;
             border-radius: 4px;
             background: #d3baf8;
             color: black;
             cursor: pointer;
+            transition: background-color 0.3s;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
           ">复制所有摘要</button>
         </div>
         <div>
           <button id="retry-failed" style="
-            padding: 5px 15px;
+            padding: 5px 12px;
             border: none;
             border-radius: 4px;
             background: ${failed > 0 ? '#d3baf8' : '#cccccc'};
             color: black;
             cursor: ${failed > 0 ? 'pointer' : 'not-allowed'};
+            transition: background-color 0.3s;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
           ">重试失败项 (${failed})</button>
         </div>
         <div style="margin-left: auto; display: flex; gap: 10px;">
           <button id="export-txt" style="
-            padding: 5px 15px;
+            padding: 5px 12px;
             border: none;
             border-radius: 4px;
             background: #d3baf8;
             color: black;
             cursor: pointer;
+            transition: background-color 0.3s;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
           ">导出为TXT</button>
           <button id="export-json" style="
-            padding: 5px 15px;
+            padding: 5px 12px;
             border: none;
             border-radius: 4px;
             background: #d3baf8;
             color: black;
             cursor: pointer;
+            transition: background-color 0.3s;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
           ">导出为JSON</button>
           <button id="export-csv" style="
-            padding: 5px 15px;
+            padding: 5px 12px;
             border: none;
             border-radius: 4px;
             background: #d3baf8;
             color: black;
             cursor: pointer;
+            transition: background-color 0.3s;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
           ">导出为CSV</button>
         </div>
       </div>
@@ -1657,6 +1634,31 @@ function displayTitlesWithJournals(papers) {
     abstractsWindow.innerHTML = content;
     document.body.appendChild(overlay);
     document.body.appendChild(abstractsWindow);
+
+    // 添加按钮悬停效果
+    const addHoverEffect = (buttonId) => {
+      const btn = document.getElementById(buttonId);
+      if (btn) {
+        btn.onmouseover = function() {
+          this.style.backgroundColor = '#e1ceff';
+        };
+        btn.onmouseout = function() {
+          this.style.backgroundColor = '#d3baf8';
+        };
+      }
+    };
+
+    // 为所有按钮添加悬停效果
+    addHoverEffect('close-abstracts');
+    addHoverEffect('copy-all-abstracts');
+    addHoverEffect('export-txt');
+    addHoverEffect('export-json');
+    addHoverEffect('export-csv');
+
+    // 为重试按钮添加悬停效果（仅当可用时）
+    if (failed > 0) {
+      addHoverEffect('retry-failed');
+    }
 
     // 关闭按钮事件
     document.getElementById('close-abstracts').onclick = function() {
@@ -1763,8 +1765,8 @@ function displayTitlesWithJournals(papers) {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      // 显示下载成功提示
-      alert(`文件 ${fileName} 已成功下载！`);
+      // 显示下载成功的横幅提示
+      showToast(`文件 ${fileName} 已成功下载！`);
     }
 
     // 重试失败项按钮事件
@@ -2161,25 +2163,54 @@ function showSettingsDialog() {
       <div style="text-align: right; margin-top: 20px;">
         <button id="cancel-settings" style="
           margin-right: 10px;
-          padding: 5px 15px;
+          padding: 5px 12px;
           border: 1px solid #ccc;
           border-radius: 4px;
           background: white;
           cursor: pointer;
+          transition: background-color 0.3s;
+          height: 30px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
         ">取消</button>
         <button id="save-settings" style="
-          padding: 5px 15px;
+          padding: 5px 12px;
           border: none;
           border-radius: 4px;
           background: #d3baf8;
           color: black;
           cursor: pointer;
+          transition: background-color 0.3s;
+          height: 30px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
         ">保存</button>
       </div>
     `;
 
     document.body.appendChild(overlay);
     document.body.appendChild(dialog);
+
+    // 添加按钮悬停效果
+    const saveButton = document.getElementById('save-settings');
+    saveButton.onmouseover = function() {
+      this.style.backgroundColor = '#e1ceff';
+    };
+    saveButton.onmouseout = function() {
+      this.style.backgroundColor = '#d3baf8';
+    };
+
+    const cancelButton = document.getElementById('cancel-settings');
+    cancelButton.onmouseover = function() {
+      this.style.backgroundColor = '#f0f0f0';
+    };
+    cancelButton.onmouseout = function() {
+      this.style.backgroundColor = 'white';
+    };
 
     // 添加事件监听器
     document.getElementById('cancel-settings').onclick = function() {
@@ -2213,7 +2244,7 @@ function showSettingsDialog() {
 }
 
 // 添加提示消息功能
-function showToast(message) {
+function showToast(message, isWarning = false) {
   const toast = document.createElement('div');
   toast.style.cssText = `
     position: fixed;
@@ -2225,8 +2256,20 @@ function showToast(message) {
     padding: 10px 20px;
     border-radius: 4px;
     z-index: 1002;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   `;
-  toast.textContent = message;
+
+  const icon = document.createElement('span');
+  icon.style.fontSize = '20px';
+  icon.textContent = isWarning ? '⚠️' : '✅';
+
+  const messageText = document.createElement('span');
+  messageText.textContent = message;
+
+  toast.appendChild(icon);
+  toast.appendChild(messageText);
   document.body.appendChild(toast);
 
   setTimeout(() => {
@@ -2249,6 +2292,27 @@ async function initialize() {
     addExtractButton();
     addSettingsButton(); // 添加设置按钮
     addProgressBar(); // 添加进度条
+
+    // 添加按钮悬停效果
+    const addHoverEffect = (id) => {
+      const button = document.getElementById(id);
+      if (button) {
+        button.onmouseover = function() {
+          this.style.backgroundColor = '#e1ceff';
+        };
+        button.onmouseout = function() {
+          this.style.backgroundColor = '#d3baf8';
+        };
+      }
+    };
+
+    // 对四个按钮添加相同的悬停效果
+    setTimeout(() => {
+      addHoverEffect('get-abstracts');
+      addHoverEffect('cite-selected');
+      addHoverEffect('clear-filters');
+      addHoverEffect('close-window');
+    }, 1000);
 
     if (isExtracting) {
       console.log('检测到正在进行的提取，继续提取。');
@@ -2300,10 +2364,6 @@ function clearAllFilters() {
   const casFilters = document.querySelectorAll('input[name="cas-filter"]');
   casFilters.forEach(filter => filter.checked = false);
 
-  // 重置CCF等级筛选
-  const ccfFilters = document.querySelectorAll('input[name="ccf-filter"]');
-  ccfFilters.forEach(filter => filter.checked = false);
-
   // 重置TOP期刊筛选
   document.getElementById('top-filter').checked = false;
 
@@ -2322,7 +2382,7 @@ function addCitationButton(paperElement, title) {
     background-color: #d3baf8;
     color: black;
     border: none;
-    padding: 5px 10px;
+    padding: 5px 12px;
     border-radius: 4px;
     cursor: pointer;
     position: absolute;
@@ -2330,6 +2390,11 @@ function addCitationButton(paperElement, title) {
     top: 50%;
     transform: translateY(-50%);
     transition: background-color 0.3s;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
   `;
 
   citationButton.onmouseover = function() {
@@ -2682,70 +2747,38 @@ function hideProgressBar() {
   }
 }
 
-// 获取CCF分级信息的辅助函数，使用多种匹配策略
-function getCCFRank(processedJournal) {
-  // 记录匹配过程
-  console.log(`尝试获取CCF等级 - 期刊: "${processedJournal}"`);
-
-  // 1. 直接查找
-  if (ccfMap[processedJournal]) {
-    console.log(`直接匹配成功: "${processedJournal}" => ${ccfMap[processedJournal].rank}`);
-    return ccfMap[processedJournal];
+// 添加按钮悬停效果的样式
+const buttonStyle = document.createElement('style');
+buttonStyle.textContent = `
+  #get-abstracts:hover,
+  #cite-selected:hover,
+  #clear-filters:hover,
+  #close-window:hover {
+    background-color: #e1ceff;
   }
+`;
+document.head.appendChild(buttonStyle);
 
-  // 2. 检查是否存在于部分名称映射中
-  if (ccfCommonNames[processedJournal]) {
-    const fullName = ccfCommonNames[processedJournal];
-    console.log(`部分名称匹配成功: "${processedJournal}" => "${fullName}" => ${ccfMap[fullName].rank}`);
-    return ccfMap[fullName];
+// 修改按钮样式
+const styleElement = document.createElement('style');
+styleElement.textContent = `
+  .action-button {
+    opacity: 1;
+    transition: all 0.3s ease;
   }
-
-  // 3. 尝试通过部分匹配查找
-  const journalParts = processedJournal.match(/.{4,}/g) || [];
-  for (const part of journalParts) {
-    if (part.length < 4) continue;
-
-    // 查找含有这个部分的任何CCF期刊
-    for (const [key, value] of Object.entries(ccfMap)) {
-      if (key.includes(part) || (value.originalName && value.originalName.toUpperCase().includes(part))) {
-        console.log(`部分内容匹配: "${processedJournal}" => "${key}" (${value.rank}), 匹配部分: "${part}"`);
-        return value;
-      }
-    }
+  .action-button:hover {
+    background-color: #e1ceff !important;
+    opacity: 0.8;
   }
+`;
+document.head.appendChild(styleElement);
 
-  // 4. 尝试匹配缩写
-  if (processedJournal.length <= 8) {
-    for (const [abbr, fullName] of Object.entries(ccfAbbreviationMap)) {
-      // 对于短名称，允许更宽松的匹配
-      if ((abbr.includes(processedJournal) || processedJournal.includes(abbr)) &&
-          Math.abs(abbr.length - processedJournal.length) <= 2) {
-        console.log(`缩写匹配: "${processedJournal}" => "${abbr}" => "${fullName}" => ${ccfMap[fullName].rank}`);
-        return ccfMap[fullName];
-      }
-    }
-  }
-
-  // 5. 尝试更宽松的匹配（仅对较长的期刊名）
-  if (processedJournal.length > 8) {
-    for (const [key, value] of Object.entries(ccfMap)) {
-      // 如果期刊名包含CCF期刊名的大部分内容
-      if (key.length > 8 && (key.includes(processedJournal) || processedJournal.includes(key))) {
-        console.log(`宽松匹配: "${processedJournal}" => "${key}" => ${value.rank}`);
-        return value;
-      }
-
-      // 检查原始名称
-      if (value.originalName) {
-        const processedOriginal = processJournalName(value.originalName);
-        if (processedOriginal.includes(processedJournal) || processedJournal.includes(processedOriginal)) {
-          console.log(`原始名称匹配: "${processedJournal}" => "${value.originalName}" => ${value.rank}`);
-          return value;
-        }
-      }
-    }
-  }
-
-  console.log(`未找到CCF等级: "${processedJournal}"`);
-  return { rank: '未知' };
-}
+// 为所有按钮添加事件监听器
+document.querySelectorAll('.action-button').forEach(button => {
+  button.onmouseover = function() {
+    this.style.backgroundColor = '#e1ceff';
+  };
+  button.onmouseout = function() {
+    this.style.backgroundColor = '#d3baf8';
+  };
+});
