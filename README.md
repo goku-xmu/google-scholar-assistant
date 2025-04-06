@@ -73,6 +73,7 @@
 1. 提交Issue报告bug或建议新功能
 2. 提交Pull Request改进代码
 3. 完善文档
+4. 在Linux.do社区参与讨论（我的id：@goku123）
 
 ## 📝 注意事项
 
