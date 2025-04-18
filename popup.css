@@ -112,7 +112,7 @@ select:focus,
 
 .dropdown-button {
   text-align: left;
-  background-color: #fff;
+  background-color: var(--bg-color);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -540,8 +540,7 @@ select:focus,
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  height: 34px;
-  background-color: var(--light-gray);
+  background-color: var(--bg-color);
   color: var(--text-color);
   border: 1px solid var(--border-color);
 }
@@ -960,6 +959,8 @@ select:focus,
   resize: vertical;
   font-family: inherit;
   font-style: normal;
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }
 
 /* Query box normal font */
