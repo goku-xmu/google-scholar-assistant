@@ -1,0 +1,1064 @@
+:root {
+  /* Light theme variables */
+  --primary-color: #4285f4;
+  --primary-dark: #3367d6;
+  --success-color: #34a853;
+  --success-dark: #2d904d;
+  --danger-color: #ea4335;
+  --danger-dark: #c5221f;
+  --neutral-color: #5f6368;
+  --neutral-dark: #3c4043;
+  --light-gray: #f1f3f4;
+  --border-color: #dadce0;
+  --box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3);
+  --animation-speed: 0.2s;
+  --bg-color: #fff;
+  --text-color: #202124;
+  --text-secondary: #5f6368;
+}
+
+/* Dark theme variables */
+[data-theme="dark"] {
+  --primary-color: #4285f4;
+  --primary-dark: #3367d6;
+  --success-color: #34a853;
+  --success-dark: #2d904d;
+  --danger-color: #f28b82;
+  --danger-dark: #ee675c;
+  --neutral-color: #9aa0a6;
+  --neutral-dark: #bdc1c6;
+  --light-gray: #303134;
+  --border-color: #5f6368;
+  --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --bg-color: #202124;
+  --text-color: #e8eaed;
+  --text-secondary: #9aa0a6;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+  width: 480px;
+  min-height: 540px;
+  padding: 14px 16px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.5;
+  transition: background-color var(--animation-speed), color var(--animation-speed);
+}
+
+h2 {
+  margin: 0;
+  font-weight: 500;
+  font-size: 20px;
+  color: var(--primary-color);
+  line-height: 1.2;
+}
+
+/* Common form elements */
+.form-group {
+  margin-bottom: 10px;
+  position: relative;
+  width: 100%;
+}
+
+#search-info-group {
+  margin-bottom: 6px;
+}
+
+label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+input[type="text"], 
+input[type="number"],
+select,
+.dropdown,
+.dropdown-button {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: border-color var(--animation-speed), box-shadow var(--animation-speed), background-color var(--animation-speed), color var(--animation-speed);
+}
+
+input:focus, 
+select:focus,
+.dropdown-button:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+}
+
+/* Dropdown styling */
+.dropdown {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+.dropdown-button {
+  text-align: left;
+  background-color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  font-size: 14px;
+  color: var(--text-secondary);
+  transition: border-color var(--animation-speed), box-shadow var(--animation-speed);
+}
+
+.dropdown-button:after {
+  content: '▼';
+  font-size: 10px;
+  color: var(--neutral-color);
+  margin-left: 8px;
+}
+
+.dropdown.active .dropdown-button {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+.dropdown.active .dropdown-button:after {
+  content: '▲';
+}
+
+.dropdown-button:hover {
+  border-color: var(--primary-color);
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: var(--bg-color);
+  width: 100%;
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  z-index: 1;
+  padding: 8px;
+  margin-top: 2px;
+  box-shadow: var(--box-shadow);
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  transform-origin: top center;
+}
+
+.dropdown.active .dropdown-content {
+  display: block;
+  animation: fadeIn var(--animation-speed);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Category styling */
+.category {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  cursor: grab;
+  border-radius: 8px;
+  transition: background-color var(--animation-speed);
+  box-sizing: border-box;
+}
+
+.category:hover {
+  background-color: var(--light-gray);
+}
+
+.category.dragging {
+  opacity: 0.7;
+  background-color: var(--light-gray);
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 4px 2px;
+}
+
+.category-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.category-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-checkbox {
+  transform: scale(1);
+  margin-right: 6px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+
+.category-info {
+  margin-right: 8px;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 13px;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.category-info:hover {
+  text-decoration: underline;
+}
+
+.copy-button, .delete-button {
+  padding: 3px 6px;
+  font-size: 12px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color var(--animation-speed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copy-button {
+  background-color: var(--neutral-color);
+}
+
+.copy-button:hover {
+  background-color: var(--neutral-dark);
+}
+
+.delete-button {
+  background-color: var(--danger-color);
+}
+
+.delete-button:hover {
+  background-color: var(--danger-dark);
+}
+
+.journals {
+  display: none;
+  margin-top: 4px;
+  padding: 5px 5px 5px 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  width: 100%;
+  border-radius: 4px;
+  background-color: var(--light-gray);
+  line-height: 1.2;
+}
+
+.journals.visible {
+  display: block;
+  animation: expandDown var(--animation-speed);
+}
+
+@keyframes expandDown {
+  from { max-height: 0; opacity: 0; }
+  to { max-height: 500px; opacity: 1; }
+}
+
+/* Button styling */
+.buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  gap: 12px;
+}
+
+.buttons button {
+  padding: 7px 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: white;
+  font-weight: 500;
+  transition: background-color var(--animation-speed), transform var(--animation-speed);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.buttons button:hover {
+  transform: translateY(-1px);
+}
+
+.buttons button:active {
+  transform: translateY(1px);
+}
+
+#generate-btn {
+  background-color: var(--success-color);
+}
+
+#generate-btn:hover {
+  background-color: var(--success-dark);
+}
+
+#search-btn {
+  background-color: var(--primary-color);
+}
+
+#search-btn:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--light-gray);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #bdc1c6;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9aa0a6;
+}
+
+/* Modal styling */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  animation: fadeIn var(--animation-speed);
+}
+
+.modal-content {
+  background-color: var(--bg-color);
+  margin: 10% auto;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(32, 33, 36, 0.2);
+  width: 80%;
+  max-width: 500px;
+}
+
+.close {
+  color: var(--neutral-color);
+  float: right;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color var(--animation-speed);
+}
+
+.close:hover {
+  color: var(--neutral-dark);
+}
+
+.modal input[type="text"], .modal textarea {
+  width: 100%;
+  padding: 10px 12px;
+  margin: 8px 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color var(--animation-speed), box-shadow var(--animation-speed);
+}
+
+.modal textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.modal input[type="text"]:focus, .modal textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+}
+
+.modal button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: white;
+  background-color: var(--primary-color);
+  font-weight: 500;
+  transition: background-color var(--animation-speed);
+}
+
+.modal button:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Drag handle styling */
+.drag-handle {
+  font-size: 16px;
+  color: #9aa0a6;
+  cursor: grab;
+  margin-left: 8px;
+  transition: color var(--animation-speed);
+}
+
+.drag-handle:hover {
+  color: #5f6368;
+}
+
+/* Tips area */
+.search-tips {
+  color: var(--text-secondary);
+  font-size: 11px;
+  margin: 4px 0 12px;
+  line-height: 1.4;
+  padding: 8px 10px;
+  background-color: var(--light-gray);
+  border-radius: 8px;
+  border-left: 3px solid var(--primary-color);
+}
+
+/* 添加搜索提示的行样式 */
+.search-tip-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.search-tip-row span {
+  flex: 0 0 48%; /* 让每个提示占用大约一半宽度 */
+  white-space: nowrap;
+}
+
+.search-tip-example {
+  margin-top: 4px;
+  padding-top: 4px;
+  font-style: italic;
+  color: var(--neutral-dark);
+  border-top: 1px solid rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+/* Year group styling */
+.year-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.year-group .form-group {
+  flex: 1;
+}
+
+/* Contact info */
+.contact-info {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-top: 12px;
+  padding-top: 6px;
+}
+
+/* Export/Import buttons */
+#export-category, #import-category {
+  margin-top: 3px;
+  padding: 4px 2px;
+  border-bottom: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#add-category {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+
+/* 导入导出按钮容器 */
+.import-export-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 2px 0 8px;
+  width: 100%;
+}
+
+.category-action {
+  flex: 1;
+  margin-top: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 修改导入导出按钮样式 */
+#import-category-button, #export-category-button {
+  padding: 6px 10px;
+  width: 100%;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--animation-speed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 34px;
+  background-color: var(--light-gray);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+#import-category-button:hover, #export-category-button:hover {
+  background-color: var(--neutral-color);
+  transform: translateY(-1px);
+  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.2);
+}
+
+#import-category-button:active, #export-category-button:active {
+  transform: translateY(0px);
+}
+
+#import-file-input {
+  display: none;
+}
+
+/* Confirm dialog */
+#confirm-dialog .modal-content {
+  max-width: 350px;
+}
+
+#confirm-dialog .button-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+#confirm-dialog button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+#confirm-yes {
+  background-color: var(--danger-color);
+}
+
+#confirm-yes:hover {
+  background-color: var(--danger-dark);
+}
+
+#confirm-no {
+  background-color: var(--neutral-color);
+}
+
+#confirm-no:hover {
+  background-color: var(--neutral-dark);
+}
+
+/* Title container */
+.title-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  padding-bottom: 0;
+}
+
+.title-icon {
+  width: 34px;
+  height: 34px;
+  margin-right: 10px;
+  display: flex;
+  align-self: center;
+}
+
+/* Action buttons in dropdown */
+#add-category-button {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--success-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color var(--animation-speed);
+}
+
+#add-category-button:hover {
+  background-color: var(--success-dark);
+}
+
+/* Journal item styling */
+.journal-item {
+  display: flex;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.journal-input {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin-right: 6px;
+  font-size: 13px;
+  transition: border-color var(--animation-speed);
+  height: 28px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.journal-input:hover {
+  border-color: #9aa0a6;
+}
+
+.journal-input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+}
+
+.delete-journal-btn {
+  background: none;
+  border: none;
+  color: var(--danger-color);
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 16px;
+  transition: color var(--animation-speed);
+  line-height: 1;
+}
+
+.delete-journal-btn:hover {
+  color: var(--danger-dark);
+}
+
+.add-journal-container {
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.new-journal-input {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px dashed #9aa0a6;
+  border-radius: 6px;
+  margin-right: 6px;
+  font-size: 13px;
+  height: 28px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.new-journal-input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.add-journal-btn {
+  background-color: var(--success-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color var(--animation-speed);
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-journal-btn:hover {
+  background-color: var(--success-dark);
+}
+
+/* 为文章类型选择器添加特殊样式 */
+#article-type, #results-per-page {
+  padding: 7px 10px;
+  height: 34px;
+}
+
+/* 确保所有元素使用box-sizing: border-box */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* 自定义提示弹窗 */
+.custom-alert {
+  display: none;
+  position: fixed;
+  z-index: 3000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  animation: fadeIn var(--animation-speed);
+}
+
+.alert-content {
+  background-color: var(--bg-color);
+  margin: 15% auto;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(32, 33, 36, 0.2);
+  width: 80%;
+  max-width: 320px;
+  text-align: center;
+  animation: slideIn var(--animation-speed);
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.alert-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  display: block;
+}
+
+.alert-message {
+  margin-bottom: 16px;
+  color: var(--text-color);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.alert-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--animation-speed);
+}
+
+.alert-button:hover {
+  background-color: var(--primary-dark);
+}
+
+/* 自定义确认对话框 */
+.custom-confirm {
+  display: none;
+  position: fixed;
+  z-index: 3000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  animation: fadeIn var(--animation-speed);
+}
+
+.confirm-content {
+  background-color: var(--bg-color);
+  margin: 15% auto;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(32, 33, 36, 0.2);
+  width: 80%;
+  max-width: 320px;
+  text-align: center;
+  animation: slideIn var(--animation-speed);
+}
+
+.confirm-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  display: block;
+}
+
+.confirm-message {
+  margin-bottom: 20px;
+  color: var(--text-color);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.confirm-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.confirm-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--animation-speed);
+}
+
+.confirm-yes {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.confirm-yes:hover {
+  background-color: var(--danger-dark);
+}
+
+.confirm-no {
+  background-color: var(--neutral-color);
+  color: white;
+}
+
+.confirm-no:hover {
+  background-color: var(--neutral-dark);
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--animation-speed);
+}
+
+.theme-toggle:hover {
+  background-color: var(--light-gray);
+}
+
+.theme-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: var(--text-color);
+  transition: transform var(--animation-speed);
+}
+
+/* Moon icon (default) */
+.theme-toggle .moon-icon {
+  display: block;
+}
+
+.theme-toggle .sun-icon {
+  display: none;
+}
+
+/* Show sun icon in dark mode */
+[data-theme="dark"] .theme-toggle .moon-icon {
+  display: none;
+}
+
+[data-theme="dark"] .theme-toggle .sun-icon {
+  display: block;
+}
+
+/* 顶部新增：高级搜索构建器布局 */
+.builder-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.field-builder {
+  display: flex;
+  gap: 8px;
+}
+.field-builder select#field-select,
+.field-builder select#add-operator {
+  flex: 0 0 100px;
+}
+.field-builder input#field-value {
+  flex: 1 1 auto;
+}
+.field-builder select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: var(--bg-color) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 7'%3E%3Cpath d='M0 0l5 7 5-7z' fill='%23333'/%3E%3C/svg%3E") no-repeat right 8px center;
+  background-size: 10px 7px;
+  padding-right: 32px;
+}
+.field-builder button {
+  padding: 6px 12px;
+  font-size: 14px;
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color var(--animation-speed);
+}
+.field-builder button:hover {
+  background-color: var(--primary-dark);
+}
+#query-box {
+  width: 100%;
+  min-height: 80px;
+  padding: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  resize: vertical;
+  font-family: inherit;
+  font-style: normal;
+}
+
+/* Query box normal font */
+#query-box {
+  font-family: inherit;
+  font-style: normal;
+}
+
+/* 查询框头部布局和清除按钮 */
+.query-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.clear-button {
+  font-size: 12px;
+  padding: 3px 8px;
+  background-color: var(--light-gray);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-color);
+  transition: background-color var(--animation-speed);
+}
+
+.clear-button:hover {
+  background-color: var(--neutral-color);
+  color: white;
+}
+
+/* 添加按钮组样式 */
+.add-button-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 0 0 110px;
+}
+
+#add-term-button {
+  border: 1px solid var(--border-color);
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 4px 0 0 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  flex: 1;
+  font-size: 14px;
+  transition: background-color var(--animation-speed);
+}
+
+#add-term-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.dropdown-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  border-left: none;
+  background-color: var(--primary-color);
+  color: white;
+  width: 24px;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+  font-size: 10px;
+  transition: background-color var(--animation-speed);
+}
+
+.dropdown-icon:hover {
+  background-color: var(--primary-dark);
+}
+
+.operator-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  display: none;
+}
+
+.operator-dropdown.visible {
+  display: block;
+}
+
+.operator-option {
+  padding: 8px;
+  cursor: pointer;
+  transition: background-color var(--animation-speed);
+}
+
+.operator-option:hover {
+  background-color: var(--light-gray);
+} 
