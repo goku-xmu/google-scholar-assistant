@@ -62,7 +62,7 @@ function parseJcrfqCSV(csvText) {
     });
     const processedJournal = processJournalName(record['Journal']);
     jcrfqMap[processedJournal] = {
-      IF_2023: record['IF(2023)'] || '未知',
+      IF_2023: record['IF(2024)'] || '未知',
       IF_Quartile: record['IF Quartile'] || '未知'
     };
   }
