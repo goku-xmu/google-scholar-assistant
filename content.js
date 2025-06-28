@@ -1020,6 +1020,18 @@ function displayTitlesWithJournals(papers) {
   // 初始化时添加事件监听器
   addFilterEventListener();
 
+  // 应用默认排序方式
+  chrome.storage.sync.get({
+    defaultSortMethod: 'alphabet-asc'  // 默认排序方式
+  }, function(items) {
+    // 设置排序下拉框的值
+    sortSelect.value = items.defaultSortMethod;
+    
+    // 手动触发一次变更事件，应用排序
+    const changeEvent = new Event('change');
+    sortSelect.dispatchEvent(changeEvent);
+  });
+
   // 初始化背景色
   const paperItems = document.querySelectorAll('.paper-item');
   paperItems.forEach((item, index) => {
@@ -2149,17 +2161,32 @@ function showSettingsDialog() {
 
   // 获取当前设置
   chrome.storage.sync.get({
-    maxPages: 10 // 默认值
+    maxPages: 10, // 默认值
+    defaultSortMethod: 'alphabet-asc' // 默认排序方式
   }, function(items) {
     dialog.innerHTML = `
       <h2 style="margin-top: 0; color: #333;">设置</h2>
       <div style="margin: 20px 0;">
         <label style="display: block; margin-bottom: 5px;">
-          提取论文页数 (每页20篇):
+          提取论文页数:
           <input type="number" id="max-pages-input" value="${items.maxPages}"
                  min="1" max="50" style="width: 60px; margin-left: 10px;">
         </label>
         <small style="color: #666;">建议值: 1-50 页</small>
+      </div>
+      <div style="margin: 20px 0;">
+        <label style="display: block; margin-bottom: 5px;">
+          默认排序方式:
+          <select id="default-sort-method" style="margin-left: 10px; padding: 3px; width: 150px;">
+            <option value="alphabet-asc" ${items.defaultSortMethod === 'alphabet-asc' ? 'selected' : ''}>A-Z</option>
+            <option value="alphabet-desc" ${items.defaultSortMethod === 'alphabet-desc' ? 'selected' : ''}>Z-A</option>
+            <option value="count-desc" ${items.defaultSortMethod === 'count-desc' ? 'selected' : ''}>数量降序</option>
+            <option value="count-asc" ${items.defaultSortMethod === 'count-asc' ? 'selected' : ''}>数量升序</option>
+            <option value="if-desc" ${items.defaultSortMethod === 'if-desc' ? 'selected' : ''}>IF降序</option>
+            <option value="if-asc" ${items.defaultSortMethod === 'if-asc' ? 'selected' : ''}>IF升序</option>
+          </select>
+        </label>
+        <small style="color: #666;">提取结果中期刊的默认排列顺序</small>
       </div>
       <div style="text-align: right; margin-top: 20px;">
         <button id="cancel-settings" style="
@@ -2221,9 +2248,11 @@ function showSettingsDialog() {
 
     document.getElementById('save-settings').onclick = function() {
       const newMaxPages = parseInt(document.getElementById('max-pages-input').value);
+      const newDefaultSortMethod = document.getElementById('default-sort-method').value;
       if (newMaxPages >= 1 && newMaxPages <= 50) {
         chrome.storage.sync.set({
-          maxPages: newMaxPages
+          maxPages: newMaxPages,
+          defaultSortMethod: newDefaultSortMethod
         }, function() {
           maxPages = newMaxPages; // 更新当前页面的变量
           overlay.remove();
@@ -2282,7 +2311,8 @@ function showToast(message, isWarning = false) {
 async function initialize() {
   // 加载设置
   chrome.storage.sync.get({
-    maxPages: 10 // 默认值
+    maxPages: 10, // 默认值
+    defaultSortMethod: 'alphabet-asc' // 默认排序方式
   }, function(items) {
     maxPages = items.maxPages;
   });
