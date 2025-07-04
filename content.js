@@ -239,11 +239,13 @@ function displayTitlesWithJournals(papers) {
   if (!resultsDiv) {
     resultsDiv = document.createElement('div');
     resultsDiv.id = 'extracted-titles';
+    resultsDiv.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
     resultsDiv.style.cssText = `
       position: fixed;
       bottom: 10px;
       right: 10px;
       background: white;
+      color: black;
       padding: 25px;
       border: none;
       height: 85vh;
@@ -256,6 +258,7 @@ function displayTitlesWithJournals(papers) {
       display: flex;
       flex-direction: column;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      transition: background-color 0.3s, color 0.3s;
     `;
     document.body.appendChild(resultsDiv);
   }
@@ -292,21 +295,41 @@ function displayTitlesWithJournals(papers) {
   // 修改筛选框的HTML结构
   const filterSortHtml = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-      <h3 style="margin: 0;">提取的论文信息 (共 ${papers.length} 篇)</h3>
-      <button id="close-window" class="action-button" style="
-        background-color: #d3baf8;
-        color: black;
-        border: none;
-        width: 30px;
-        height: 30px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 18px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        transition: background-color 0.3s;
-      ">×</button>
+      <h3 style="margin: 0; color: black;">提取的论文信息 (共 ${papers.length} 篇)</h3>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button id="theme-toggle-extraction" style="
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 8px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background-color 0.3s;
+        " title="切换主题">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: #333;" class="moon-icon-extraction">
+            <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"/>
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: #333; display: none;" class="sun-icon-extraction">
+            <path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/>
+          </svg>
+        </button>
+        <button id="close-window" class="action-button" style="
+          background-color: #d3baf8;
+          color: black;
+          border: none;
+          width: 30px;
+          height: 30px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 18px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          transition: background-color 0.3s;
+        ">×</button>
+      </div>
     </div>
     <div class="filter-sort-container" style="
       display: flex;
@@ -358,7 +381,7 @@ function displayTitlesWithJournals(papers) {
                   <span class="info-tag if-tag">IF: ${jcrfqMap[journal]?.IF_2023 || '未知'}</span>
                   <span class="info-tag jcr-tag">JCR: ${jcrfqMap[journal]?.IF_Quartile || '未知'}</span>
                   <span class="info-tag cas-tag">中科院${zkyfqMap[journal]?.大类分区 || '未知'}区${zkyfqMap[journal]?.Top === '是' ? 'TOP' : ''}</span>
-                  <span style="margin-left: 5px; color: #666; font-size: 14px;">(${journalCountMap[journal]})</span>
+                  <span class="journal-count" style="margin-left: 5px; color: #666; font-size: 14px;">(${journalCountMap[journal]})</span>
                 </span>
               </label>
             `;
@@ -514,7 +537,7 @@ function displayTitlesWithJournals(papers) {
           <div style="display: flex; align-items: center; justify-content: space-between;">
             <label style="display: flex; align-items: center;">
               <input type="checkbox" id="top-filter" style="margin-right: 5px;">
-              <span style="font-size: 14px; font-weight: 500; color: #333;">TOP期刊</span>
+              <span class="top-filter-label" style="font-size: 14px; font-weight: 500; color: #333;">TOP期刊</span>
             </label>
             <button id="clear-filters" class="action-button" style="
               background-color: #e0e0e0;
@@ -587,7 +610,7 @@ function displayTitlesWithJournals(papers) {
         ">引用所选论文</button>
       </div>
     </div>
-    <div style="padding: 10px; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 10px;">
+    <div class="select-all-container" style="padding: 10px; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 10px;">
       <label style="display: flex; align-items: center; cursor: pointer;">
         <input type="checkbox" id="select-all-papers" style="
           margin-right: 15px;
@@ -843,8 +866,19 @@ function displayTitlesWithJournals(papers) {
     .snippet-content b,
     .snippet-content strong {
       font-weight: bold !important;
-      color: darkred !important;
       background-color: transparent !important;
+    }
+    
+    [data-theme="light"] .snippet-content b,
+    [data-theme="light"] .snippet-content strong,
+    :root .snippet-content b,
+    :root .snippet-content strong {
+      color: darkred !important;
+    }
+    
+    [data-theme="dark"] .snippet-content b,
+    [data-theme="dark"] .snippet-content strong {
+      color: #ff69b4 !important;
     }
     .paper-item {
       margin-bottom: 10px;
@@ -966,7 +1000,7 @@ function displayTitlesWithJournals(papers) {
               <span class="info-tag if-tag">IF: ${jcrfqMap[journal]?.IF_2023 || '未知'}</span>
               <span class="info-tag jcr-tag">JCR: ${jcrfqMap[journal]?.IF_Quartile || '未知'}</span>
               <span class="info-tag cas-tag">中科院${zkyfqMap[journal]?.大类分区 || '未知'}区${zkyfqMap[journal]?.Top === '是' ? 'TOP' : ''}</span>
-              <span style="margin-left: 5px; color: #666; font-size: 14px;">(${journalCountMap[journal]})</span>
+              <span class="journal-count" style="margin-left: 5px; color: #666; font-size: 14px;">(${journalCountMap[journal]})</span>
             </span>
           </label>
         `;
@@ -1045,6 +1079,54 @@ function displayTitlesWithJournals(papers) {
   // 添加关闭窗口按钮的事监器
   const closeButton = document.getElementById('close-window');
   closeButton.addEventListener('click', closeResultsWindow);
+
+  // 添加论文提取页面的主题切换功能
+  function updateExtractionThemeIcons() {
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    const moonIcon = document.querySelector('.moon-icon-extraction');
+    const sunIcon = document.querySelector('.sun-icon-extraction');
+    
+    if (moonIcon && sunIcon) {
+      if (currentTheme === 'dark') {
+        moonIcon.style.display = 'none';
+        sunIcon.style.display = 'block';
+      } else {
+        moonIcon.style.display = 'block';
+        sunIcon.style.display = 'none';
+      }
+    }
+  }
+
+  function toggleExtractionTheme() {
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('theme', newTheme);
+    
+    // 更新论文提取页面主题
+    const extractedTitles = document.getElementById('extracted-titles');
+    if (extractedTitles) {
+      extractedTitles.setAttribute('data-theme', newTheme);
+      applyThemeToElement(extractedTitles, newTheme);
+    }
+    
+    updateExtractionThemeIcons();
+  }
+
+  // 初始化论文提取页面的主题图标
+  updateExtractionThemeIcons();
+  
+  // 应用初始主题到论文提取页面
+  const currentTheme = localStorage.getItem('theme') || 'light';
+  const extractedTitles = document.getElementById('extracted-titles');
+  if (extractedTitles) {
+    applyThemeToElement(extractedTitles, currentTheme);
+  }
+
+  // 添加主题切换按钮事件监听器
+  const themeToggleExtraction = document.getElementById('theme-toggle-extraction');
+  if (themeToggleExtraction) {
+    themeToggleExtraction.addEventListener('click', toggleExtractionTheme);
+  }
 
   // 修改筛选功能
   function filterJournals() {
@@ -1492,6 +1574,8 @@ function displayTitlesWithJournals(papers) {
     const noAbstract = abstractResults.filter(r => r.status === 'no_abstract').length;
 
     const abstractsWindow = document.createElement('div');
+    abstractsWindow.className = 'abstracts-window';
+    abstractsWindow.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
     abstractsWindow.style.cssText = `
       position: fixed;
       top: 50%;
@@ -1501,11 +1585,13 @@ function displayTitlesWithJournals(papers) {
       max-width: 1000px;
       height: 80vh;
       background: white;
+      color: black;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       z-index: 1001;
       overflow-y: auto;
+      transition: background-color 0.3s, color 0.3s;
     `;
 
     const overlay = document.createElement('div');
@@ -1522,7 +1608,7 @@ function displayTitlesWithJournals(papers) {
     const content = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <div>
-          <h2 style="margin: 0;">论文摘要</h2>
+          <h2 style="margin: 0; color: black;">论文摘要</h2>
           <div style="margin-top: 5px; font-size: 0.9em; color: #666;">
             总计: ${abstractResults.length} |
             成功: ${successful} |
@@ -1647,6 +1733,10 @@ function displayTitlesWithJournals(papers) {
     abstractsWindow.innerHTML = content;
     document.body.appendChild(overlay);
     document.body.appendChild(abstractsWindow);
+    
+    // 应用主题到摘要窗口
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    applyThemeToElement(abstractsWindow, currentTheme);
 
     // 添加按钮悬停效果
     const addHoverEffect = (buttonId) => {
@@ -2135,17 +2225,20 @@ function showSettingsDialog() {
 
   const dialog = document.createElement('div');
   dialog.id = 'settings-dialog';
+  dialog.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
   dialog.style.cssText = `
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     background: white;
+    color: black;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     z-index: 1001;
     min-width: 300px;
+    transition: background-color 0.3s, color 0.3s;
   `;
 
   const overlay = document.createElement('div');
@@ -2165,19 +2258,39 @@ function showSettingsDialog() {
     defaultSortMethod: 'alphabet-asc' // 默认排序方式
   }, function(items) {
     dialog.innerHTML = `
-      <h2 style="margin-top: 0; color: #333;">设置</h2>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; color: #333;">设置</h2>
+        <button id="theme-toggle-settings" style="
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 8px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background-color 0.3s;
+        " title="切换主题">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: #333;" class="moon-icon-settings">
+            <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"/>
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: #333; display: none;" class="sun-icon-settings">
+            <path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/>
+          </svg>
+        </button>
+      </div>
       <div style="margin: 20px 0;">
-        <label style="display: block; margin-bottom: 5px;">
+        <label style="display: block; margin-bottom: 5px; color: #333;">
           提取论文页数:
           <input type="number" id="max-pages-input" value="${items.maxPages}"
-                 min="1" max="50" style="width: 60px; margin-left: 10px;">
+                 min="1" max="50" style="width: 60px; margin-left: 10px; background: white; color: #333; border: 1px solid #ccc; border-radius: 4px; padding: 4px;">
         </label>
         <small style="color: #666;">建议值: 1-50 页</small>
       </div>
       <div style="margin: 20px 0;">
-        <label style="display: block; margin-bottom: 5px;">
+        <label style="display: block; margin-bottom: 5px; color: #333;">
           默认排序方式:
-          <select id="default-sort-method" style="margin-left: 10px; padding: 3px; width: 150px;">
+          <select id="default-sort-method" style="margin-left: 10px; padding: 3px; width: 150px; background: white; color: #333; border: 1px solid #ccc; border-radius: 4px;">
             <option value="alphabet-asc" ${items.defaultSortMethod === 'alphabet-asc' ? 'selected' : ''}>A-Z</option>
             <option value="alphabet-desc" ${items.defaultSortMethod === 'alphabet-desc' ? 'selected' : ''}>Z-A</option>
             <option value="count-desc" ${items.defaultSortMethod === 'count-desc' ? 'selected' : ''}>数量降序</option>
@@ -2195,6 +2308,7 @@ function showSettingsDialog() {
           border: 1px solid #ccc;
           border-radius: 4px;
           background: white;
+          color: #333;
           cursor: pointer;
           transition: background-color 0.3s;
           height: 30px;
@@ -2222,6 +2336,52 @@ function showSettingsDialog() {
 
     document.body.appendChild(overlay);
     document.body.appendChild(dialog);
+
+    // 更新主题图标显示
+    function updateSettingsThemeIcons() {
+      const currentTheme = localStorage.getItem('theme') || 'light';
+      const moonIcon = dialog.querySelector('.moon-icon-settings');
+      const sunIcon = dialog.querySelector('.sun-icon-settings');
+      
+      if (currentTheme === 'dark') {
+        moonIcon.style.display = 'none';
+        sunIcon.style.display = 'block';
+      } else {
+        moonIcon.style.display = 'block';
+        sunIcon.style.display = 'none';
+      }
+    }
+
+    // 主题切换函数
+    function toggleSettingsTheme() {
+      const currentTheme = localStorage.getItem('theme') || 'light';
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('theme', newTheme);
+      
+      // 更新对话框主题
+      dialog.setAttribute('data-theme', newTheme);
+      updateSettingsThemeIcons();
+      
+      // 应用主题样式到对话框
+      applyThemeToElement(dialog, newTheme);
+      
+      // 如果存在论文提取结果窗口，也更新其主题
+      const extractedTitles = document.getElementById('extracted-titles');
+      if (extractedTitles) {
+        extractedTitles.setAttribute('data-theme', newTheme);
+        applyThemeToElement(extractedTitles, newTheme);
+      }
+    }
+
+    // 初始化主题图标
+    updateSettingsThemeIcons();
+    
+    // 应用初始主题
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    applyThemeToElement(dialog, currentTheme);
+
+    // 主题切换按钮事件
+    document.getElementById('theme-toggle-settings').addEventListener('click', toggleSettingsTheme);
 
     // 添加按钮悬停效果
     const saveButton = document.getElementById('save-settings');
@@ -2307,8 +2467,132 @@ function showToast(message, isWarning = false) {
   }, 2000);
 }
 
+// 主题色彩定义
+const themes = {
+  light: {
+    bgColor: '#fff',
+    textColor: '#202124',
+    textSecondary: '#5f6368',
+    borderColor: '#dadce0',
+    hoverBg: '#f8f9fa',
+    lightGray: '#f1f3f4',
+    primaryColor: '#4285f4',
+    neutralColor: '#5f6368',
+    paperBgEven: '#f9f9f9',
+    paperBgOdd: '#e6f7ff',
+    highlightColor: 'darkred',
+    journalCountColor: '#666'
+  },
+  dark: {
+    bgColor: '#202124',
+    textColor: '#e8eaed',
+    textSecondary: '#9aa0a6',
+    borderColor: '#5f6368',
+    hoverBg: '#303134',
+    lightGray: '#3c4043',
+    primaryColor: '#8ab4f8',
+    neutralColor: '#9aa0a6',
+    paperBgEven: '#2d3842',
+    paperBgOdd: '#232629',
+    highlightColor: '#ff69b4',
+    journalCountColor: '#9aa0a6'
+  }
+};
+
+// 应用主题到元素
+function applyThemeToElement(element, theme) {
+  const colors = themes[theme];
+  if (!colors) return;
+
+  // 更新元素背景和文字色
+  element.style.backgroundColor = colors.bgColor;
+  element.style.color = colors.textColor;
+
+  // 更新所有子元素
+  const inputs = element.querySelectorAll('input, select, textarea');
+  inputs.forEach(input => {
+    input.style.backgroundColor = colors.bgColor;
+    input.style.color = colors.textColor;
+    input.style.borderColor = colors.borderColor;
+  });
+
+  const labels = element.querySelectorAll('label, h2, h3');
+  labels.forEach(label => {
+    label.style.color = colors.textColor;
+  });
+
+  const smalls = element.querySelectorAll('small');
+  smalls.forEach(small => {
+    small.style.color = colors.textSecondary;
+  });
+
+  const filterContainers = element.querySelectorAll('.filter-sort-container > div:last-child > div:last-child, #journal-filter');
+  filterContainers.forEach(container => {
+    container.style.backgroundColor = colors.hoverBg;
+    container.style.borderColor = colors.borderColor;
+  });
+
+  const paperItems = element.querySelectorAll('.paper-item');
+  paperItems.forEach((item, index) => {
+    item.style.borderColor = colors.borderColor;
+    // 应用交替背景色
+    const paperContent = item.querySelector('.paper-content');
+    if (paperContent) {
+      paperContent.style.backgroundColor = index % 2 === 0 ? colors.paperBgEven : colors.paperBgOdd;
+      paperContent.style.color = colors.textColor;
+    }
+  });
+
+  const paperLinks = element.querySelectorAll('.paper-title-link');
+  paperLinks.forEach(link => {
+    link.style.color = colors.textColor;
+  });
+
+  // 更新清除筛选按钮
+  const clearButton = element.querySelector('#clear-filters');
+  if (clearButton) {
+    clearButton.style.backgroundColor = colors.lightGray;
+    clearButton.style.color = colors.textColor;
+    clearButton.style.borderColor = colors.borderColor;
+  }
+  
+  // 更新主题切换按钮的图标颜色
+  const themeIcons = element.querySelectorAll('.moon-icon-settings, .sun-icon-settings, .moon-icon-extraction, .sun-icon-extraction');
+  themeIcons.forEach(icon => {
+    icon.style.fill = colors.textColor;
+  });
+  
+  // 更新全选容器的背景色
+  const selectAllContainer = element.querySelector('.select-all-container');
+  if (selectAllContainer) {
+    selectAllContainer.style.backgroundColor = colors.hoverBg;
+  }
+  
+  // 更新摘要中高亮关键词的颜色
+  const highlightElements = element.querySelectorAll('.snippet-content b, .snippet-content strong');
+  highlightElements.forEach(highlight => {
+    highlight.style.color = colors.highlightColor;
+  });
+  
+  // 更新TOP期刊标签的颜色
+  const topFilterLabels = element.querySelectorAll('.top-filter-label');
+  topFilterLabels.forEach(label => {
+    label.style.color = colors.textColor;
+  });
+  
+  // 更新期刊数量的颜色
+  const journalCounts = element.querySelectorAll('.journal-count');
+  journalCounts.forEach(count => {
+    count.style.color = colors.journalCountColor;
+  });
+}
+
 // 修改初始化函数，添加设置的加载
 async function initialize() {
+  // 初始化主题
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  
   // 加载设置
   chrome.storage.sync.get({
     maxPages: 10, // 默认值
@@ -2790,19 +3074,194 @@ buttonStyle.textContent = `
 `;
 document.head.appendChild(buttonStyle);
 
-// 修改按钮样式
-const styleElement = document.createElement('style');
-styleElement.textContent = `
+// 添加主题样式
+const themeStyleElement = document.createElement('style');
+themeStyleElement.textContent = `
+  /* Light theme variables */
+  :root, [data-theme="light"] {
+    --primary-color: #4285f4;
+    --primary-dark: #3367d6;
+    --success-color: #34a853;
+    --success-dark: #2d904d;
+    --danger-color: #ea4335;
+    --danger-dark: #c5221f;
+    --neutral-color: #5f6368;
+    --neutral-dark: #3c4043;
+    --light-gray: #f1f3f4;
+    --border-color: #dadce0;
+    --box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3);
+    --bg-color: #fff;
+    --text-color: #202124;
+    --text-secondary: #5f6368;
+    --hover-bg: #f8f9fa;
+    --modal-bg: rgba(0, 0, 0, 0.5);
+  }
+
+  /* Dark theme variables */
+  [data-theme="dark"] {
+    --primary-color: #8ab4f8;
+    --primary-dark: #669df6;
+    --success-color: #81c995;
+    --success-dark: #5bb974;
+    --danger-color: #f28b82;
+    --danger-dark: #ee675c;
+    --neutral-color: #9aa0a6;
+    --neutral-dark: #bdc1c6;
+    --light-gray: #3c4043;
+    --border-color: #5f6368;
+    --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --bg-color: #202124;
+    --text-color: #e8eaed;
+    --text-secondary: #9aa0a6;
+    --hover-bg: #303134;
+    --modal-bg: rgba(0, 0, 0, 0.7);
+  }
+
+  /* 主题切换按钮悬停效果 */
+  #theme-toggle-settings:hover, #theme-toggle-extraction:hover {
+    background-color: var(--hover-bg) !important;
+  }
+
+  /* 更新按钮样式以支持主题 */
   .action-button {
     opacity: 1;
     transition: all 0.3s ease;
+    background-color: #d3baf8 !important;
+    color: black !important;
   }
   .action-button:hover {
     background-color: #e1ceff !important;
     opacity: 0.8;
   }
+
+  /* 设置对话框主题样式 */
+  #settings-dialog {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color);
+  }
+
+  #settings-dialog input, #settings-dialog select {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color) !important;
+  }
+
+  #settings-dialog input:focus, #settings-dialog select:focus {
+    border-color: var(--primary-color) !important;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.2);
+  }
+
+  /* 论文提取结果页面主题样式 */
+  #extracted-titles {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color);
+  }
+
+  #extracted-titles h3 {
+    color: var(--text-color) !important;
+  }
+
+  #extracted-titles .filter-sort-container {
+    background: var(--bg-color) !important;
+  }
+
+  #extracted-titles input, #extracted-titles select {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color) !important;
+  }
+
+  #extracted-titles input:focus, #extracted-titles select:focus {
+    border-color: var(--primary-color) !important;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.2);
+  }
+
+  /* 论文项目的主题样式 */
+  .paper-item {
+    border: 1px solid var(--border-color) !important;
+    background: var(--bg-color) !important;
+  }
+
+  .paper-content {
+    color: var(--text-color) !important;
+  }
+
+  .paper-title-link {
+    color: var(--text-color) !important;
+  }
+
+  .paper-title-link:hover {
+    color: var(--primary-color) !important;
+  }
+
+  /* 期刊筛选区域样式 */
+  #journal-filter {
+    background: var(--hover-bg) !important;
+    border: 1px solid var(--border-color) !important;
+  }
+
+  #journal-filter label {
+    color: var(--text-color) !important;
+  }
+
+  #journal-filter label:hover {
+    background-color: var(--light-gray) !important;
+  }
+
+  /* 筛选选项区域样式 */
+  .filter-sort-container > div:last-child > div:last-child {
+    background: var(--hover-bg) !important;
+    border: 1px solid var(--border-color) !important;
+  }
+
+  /* 清除筛选按钮样式 */
+  #clear-filters {
+    background-color: var(--light-gray) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color) !important;
+  }
+
+  #clear-filters:hover {
+    background-color: var(--neutral-color) !important;
+    color: white !important;
+  }
+
+  /* 小标签样式 */
+  small {
+    color: var(--text-secondary) !important;
+  }
+
+  /* 加载覆盖层样式 */
+  .loading-overlay {
+    background: var(--modal-bg) !important;
+  }
+
+  .loading-content {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color);
+  }
+
+  /* 自定义弹窗样式 */
+  .custom-alert .alert-content,
+  .custom-confirm .confirm-content {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color);
+  }
+
+  /* 摘要窗口样式 */
+  .abstracts-window {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color);
+  }
 `;
-document.head.appendChild(styleElement);
+document.head.appendChild(themeStyleElement);
 
 // 为所有按钮添加事件监听器
 document.querySelectorAll('.action-button').forEach(button => {
